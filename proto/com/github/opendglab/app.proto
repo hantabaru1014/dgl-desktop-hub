@@ -1,0 +1,129 @@
+syntax = "proto3";
+package com.github.opendglab;
+
+// Based on the message definitions of OpenDGLab-OpenProtocol
+// (https://github.com/OpenDGLab/OpenDGLab-OpenProtocol), with a Connect/gRPC
+// service provided by this hub added on top. The original app.proto has no
+// service definition, so we declare our own service here.
+
+enum DGEvent {
+    EVENTUNSET = 0; // unset
+    CONNECT = 1; // connect (send body DGConnect / receive body DGConnect)
+    GETDEVICE = 2; // get devices (no send body / receive body DGDeviceList)
+    LOCKDEVICE = 3; // lock device into remote mode (send body DGDeviceID / receive body DGDevice)
+    UNLOCKDEVICE = 4; // unlock device remote mode (send body DGDeviceID / receive body DGDevice)
+    GETSTRENGTH = 5; // get strength (send body DGDeviceID / receive body DGDeviceID, DGDeviceStrength)
+    SETSTRENGTH = 6; // set strength (send body DGDeviceID, DGStrength / no response)
+    GETWAVELIST = 7; // get wave list (no send body / receive body DGWaveList)
+    GETWAVE = 8; // get wave name (send body DGDeviceID / receive body DGDeviceID, DGWave)
+    SETWAVE = 9; // set wave (send body DGDeviceID, DGWave / no response)
+    CUSTOMWAVE = 10; // send custom wave (send body DGDeviceID, DGCustomWave / no response)
+    CLEARCUSTOM = 11; // clear custom wave (send body DGDeviceID / no response)
+    DEVICERESET = 12; // device state has been reset (no send / receive body DGDeviceID)
+    CANTDOTHIS = 13; // response for an action that cannot be performed (no send / receive body DGError, optional DGDeviceID)
+    PING = 14; // Ping
+}
+// Error response
+enum DGError {
+    ERRORUNSET = 0; // unset
+    UNKNOWN = 1; // unknown error
+    UNAUTHED = 2; // unauthenticated operation
+    DEVICENOTLOCK = 3; // device is not locked into remote mode
+    DEVICENOTLOCKBYYOU = 4; // this device was not locked by you
+    DEVICEOFFLINE = 5; // device is offline
+}
+// Device channel
+enum DGDeviceChannel {
+    UNSET = 0; // unset
+    CHANNEL_A = 1; // channel A
+    CHANNEL_B = 2; // channel B
+}
+// Client -> OpenDGLab controller
+message DGRequest {
+    // Connect
+    message DGConnect {
+        string appName = 1; // application name
+        string uuid = 2; // application ID
+        string token = 3; // pre-authorized key
+    }
+    // Device ID
+    message DGDeviceID {
+        string deviceId = 1; // device ID
+        DGDeviceChannel deviceChannel = 2; // device channel
+    }
+    // Strength setting
+    message DGStrength {
+        int32 strengthA = 1; // channel A
+        int32 strengthB = 2; // channel B
+    }
+    // Wave
+    message DGWave {
+        string waveName = 1; // wave name
+    }
+    // Custom wave
+    message DGCustomWave {
+        bytes bytes = 1; // wave data, must be 3 bytes
+    }
+    int32 version = 1; // protocol version, currently 1
+    DGEvent event = 2; // operation
+    DGConnect connect = 3; // connect parameters
+    DGDeviceID device = 4; // device ID
+    DGStrength strength = 5; // strength
+    DGWave wave = 6; // wave
+    repeated DGCustomWave customWave = 7; // custom wave
+}
+// OpenDGLab controller -> client
+message DGResponse {
+    // Connect
+    message DGConnect {
+        string token = 1; // authorization key
+    }
+    // Device list
+    message DGDeviceList {
+        repeated DGDevice devices = 1; // device list
+    }
+    // Device
+    message DGDevice {
+        string id = 1; // device ID
+        bool isLockedByRemote = 2; // whether it is in remote locked mode
+        bool isLockedByMe = 3; // whether it was locked by this software
+    }
+    // Device ID
+    message DGDeviceID {
+        string deviceId = 1; // device ID
+        DGDeviceChannel deviceChannel = 2; // device channel
+    }
+    // Strength
+    message DGDeviceStrength {
+        int32 strengthA = 1; // channel A
+        int32 strengthB = 2; // channel B
+    }
+    // Wave list
+    message DGWaveList {
+        repeated string wave = 1; // list of wave names
+    }
+    // Wave
+    message DGWave {
+        string wave = 1; // wave name
+    }
+    int32 version = 1; // protocol version, currently 1
+    DGEvent event = 2; // operation
+    DGConnect connect = 3; // connect response
+    DGDeviceList deviceList = 4; // device list
+    DGDeviceID deviceId = 5; // device ID
+    DGDevice device = 6; // single device
+    DGDeviceStrength strength = 7; // strength
+    DGWaveList waveList = 8; // wave list
+    DGWave waveName = 9; // wave name
+    DGError error = 10; // response error
+}
+
+// OpenDGLabService is the control service provided by this hub.
+// The original protocol is event-driven (1 DGRequest = 1 DGEvent), so:
+//   - Send: single request/response (Connect protocol, JSON/binary).
+//   - Subscribe: server-streaming for push notifications such as strength
+//     changes from other apps or device connect/disconnect events.
+service OpenDGLabService {
+    rpc Send(DGRequest) returns (DGResponse);
+    rpc Subscribe(DGRequest) returns (stream DGResponse);
+}

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=My Product
+Comment=A dgl-desktop-hub application
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/dgl-desktop-hub.exe %u
+Terminal=false
+Type=Application
+Icon=dgl-desktop-hub.exe
+Categories=Utility;
+StartupWMClass=dgl-desktop-hub.exe
+
+ 
