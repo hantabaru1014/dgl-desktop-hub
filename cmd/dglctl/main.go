@@ -65,7 +65,8 @@ func main() {
 
 	// WAVELIST
 	wl := send(&pb.DGRequest{Version: 1, Event: pb.DGEvent_GETWAVELIST})
-	fmt.Printf("presets (%d): %v\n", len(wl.GetWaveList().GetWave()), wl.GetWaveList().GetWave())
+	waves := wl.GetWaveList().GetWave()
+	fmt.Printf("presets (%d): %v\n", len(waves), waves)
 
 	if cmd != "drive" {
 		return
@@ -74,11 +75,11 @@ func main() {
 	id := devs[0].GetId()
 	fmt.Println("driving device:", id)
 
-	// 両チャンネルに「潮汐」波形を設定。
+	// 両チャンネルに2つ目の波形を設定。
 	send(&pb.DGRequest{Version: 1, Event: pb.DGEvent_SETWAVE,
 		Device: &pb.DGRequest_DGDeviceID{DeviceId: id},
-		Wave:   &pb.DGRequest_DGWave{WaveName: "潮汐"}})
-	fmt.Println("set wave: 潮汐 (A+B)")
+		Wave:   &pb.DGRequest_DGWave{WaveName: waves[1]}})
+	fmt.Println("set wave: Tide (A+B)")
 
 	// 強度を 0→120 へランプ (ソフトリミットで頭打ちになる様子も観察できる)。
 	for v := int32(0); v <= 120; v += 10 {
