@@ -70,6 +70,13 @@ type ServerInfoDTO struct {
 	Running bool   `json:"running"`
 }
 
+// AppInfoDTO はソフトウェアの概要情報 (設定モーダルの「概要」タブ用)。
+type AppInfoDTO struct {
+	Name      string `json:"name"`      // アプリ名
+	RepoURL   string `json:"repoUrl"`   // ソースリポジトリ URL
+	CommitSHA string `json:"commitSha"` // ビルド元のコミット SHA (開発ビルドでは "dev")
+}
+
 func batteryToInt(b uint8) int {
 	if b == device.BatteryUnknown {
 		return -1

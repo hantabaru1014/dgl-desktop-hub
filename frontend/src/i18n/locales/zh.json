@@ -12,6 +12,18 @@
   "language": {
     "label": "语言"
   },
+  "settings": {
+    "title": "设置",
+    "tabGeneral": "常规",
+    "tabAbout": "关于",
+    "tabLicenses": "许可证",
+    "repository": "仓库",
+    "commit": "提交",
+    "licenseIntro": "本软件包含以下第三方软件，各自归其版权所有者所有。",
+    "licenseGroupProtocol": "协议定义",
+    "licenseGroupGo": "后端 (Go)",
+    "licenseGroupFrontend": "前端"
+  },
   "header": {
     "autoApprove": "自动批准连接",
     "connectedApps": "已连接应用: {{count}}",

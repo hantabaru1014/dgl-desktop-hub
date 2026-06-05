@@ -15,7 +15,7 @@ import SocketServerPanel from "./components/SocketServerPanel";
 import Copyable from "./components/Copyable";
 import ApprovalModal from "./components/ApprovalModal";
 import ProtocolHelpModal from "./components/ProtocolHelpModal";
-import LanguageSwitcher from "./components/LanguageSwitcher";
+import SettingsModal from "./components/SettingsModal";
 import { pushFrame } from "./graphStore";
 
 export default function App() {
@@ -27,6 +27,7 @@ export default function App() {
   const [apps, setApps] = useState<AppDTO[]>([]);
   const [appPort, setAppPort] = useState<number>(7330);
   const [showHelp, setShowHelp] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     void HubService.ListDevices().then(setDevices);
@@ -74,7 +75,27 @@ export default function App() {
               {t("header.autoApprove")}
             </label>
             <span className="text-slate-400">{t("header.connectedApps", { count: apps.length })}</span>
-            <LanguageSwitcher />
+            <button
+              type="button"
+              aria-label={t("settings.title")}
+              title={t("settings.title")}
+              onClick={() => setShowSettings(true)}
+              className="rounded p-1.5 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
           </div>
         </div>
         {server && (
@@ -145,6 +166,7 @@ export default function App() {
       {showHelp && server && (
         <ProtocolHelpModal baseUrl={server.connect} onClose={() => setShowHelp(false)} />
       )}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

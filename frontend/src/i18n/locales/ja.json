@@ -12,6 +12,18 @@
   "language": {
     "label": "言語"
   },
+  "settings": {
+    "title": "設定",
+    "tabGeneral": "一般",
+    "tabAbout": "概要",
+    "tabLicenses": "ライセンス",
+    "repository": "リポジトリ",
+    "commit": "コミット",
+    "licenseIntro": "本ソフトウェアには以下のサードパーティ製ソフトウェアが含まれています。各著作権者に帰属します。",
+    "licenseGroupProtocol": "プロトコル定義",
+    "licenseGroupGo": "バックエンド (Go)",
+    "licenseGroupFrontend": "フロントエンド"
+  },
   "header": {
     "autoApprove": "接続を自動許可",
     "connectedApps": "接続アプリ: {{count}}",

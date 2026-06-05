@@ -11,4 +11,5 @@ export type {
   ScanResultDTO,
   SocketServerDTO,
   ApprovalRequestDTO,
+  AppInfoDTO,
 } from "../bindings/github.com/hantabaru1014/dgl-desktop-hub/services";

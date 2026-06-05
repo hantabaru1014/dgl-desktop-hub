@@ -57,11 +57,20 @@ export function GetAccessMode(): $CancellablePromise<$models.AccessModeDTO> {
 }
 
 /**
+ * GetAppInfo はソフトウェアの概要情報 (名称・リポジトリ URL・コミット SHA) を返す。
+ */
+export function GetAppInfo(): $CancellablePromise<$models.AppInfoDTO> {
+    return $Call.ByID(2499129323).then(($result: any) => {
+        return $$createType2($result);
+    });
+}
+
+/**
  * GetPresets は波形プリセット一覧を返す。
  */
 export function GetPresets(): $CancellablePromise<$models.PresetDTO[]> {
     return $Call.ByID(1046178320).then(($result: any) => {
-        return $$createType3($result);
+        return $$createType4($result);
     });
 }
 
@@ -71,7 +80,7 @@ export function GetPresets(): $CancellablePromise<$models.PresetDTO[]> {
  */
 export function GetServerInfo(): $CancellablePromise<$models.ServerInfoDTO> {
     return $Call.ByID(3658785163).then(($result: any) => {
-        return $$createType4($result);
+        return $$createType5($result);
     });
 }
 
@@ -80,7 +89,7 @@ export function GetServerInfo(): $CancellablePromise<$models.ServerInfoDTO> {
  */
 export function GetSocketServerInfo(): $CancellablePromise<$models.SocketServerDTO> {
     return $Call.ByID(1649052066).then(($result: any) => {
-        return $$createType5($result);
+        return $$createType6($result);
     });
 }
 
@@ -89,7 +98,7 @@ export function GetSocketServerInfo(): $CancellablePromise<$models.SocketServerD
  */
 export function ListApps(): $CancellablePromise<$models.AppDTO[]> {
     return $Call.ByID(124334256).then(($result: any) => {
-        return $$createType7($result);
+        return $$createType8($result);
     });
 }
 
@@ -98,7 +107,7 @@ export function ListApps(): $CancellablePromise<$models.AppDTO[]> {
  */
 export function ListDevices(): $CancellablePromise<$models.DeviceDTO[]> {
     return $Call.ByID(2285248163).then(($result: any) => {
-        return $$createType8($result);
+        return $$createType9($result);
     });
 }
 
@@ -114,7 +123,7 @@ export function RemoveDevice(id: string): $CancellablePromise<void> {
  */
 export function ScanBLE(seconds: number): $CancellablePromise<$models.ScanResultDTO[]> {
     return $Call.ByID(649496214, seconds).then(($result: any) => {
-        return $$createType10($result);
+        return $$createType11($result);
     });
 }
 
@@ -123,7 +132,7 @@ export function ScanBLE(seconds: number): $CancellablePromise<$models.ScanResult
  */
 export function SetAppServerPort(port: number): $CancellablePromise<$models.ServerInfoDTO> {
     return $Call.ByID(2053346435, port).then(($result: any) => {
-        return $$createType4($result);
+        return $$createType5($result);
     });
 }
 
@@ -183,7 +192,7 @@ export function StartAppServer(): $CancellablePromise<void> {
  */
 export function StartSocketServer(port: number): $CancellablePromise<$models.SocketServerDTO> {
     return $Call.ByID(1550738394, port).then(($result: any) => {
-        return $$createType5($result);
+        return $$createType6($result);
     });
 }
 
@@ -197,12 +206,13 @@ export function StopSocketServer(): $CancellablePromise<void> {
 // Private type creation functions
 const $$createType0 = $models.DeviceDTO.createFrom;
 const $$createType1 = $models.AccessModeDTO.createFrom;
-const $$createType2 = $models.PresetDTO.createFrom;
-const $$createType3 = $Create.Array($$createType2);
-const $$createType4 = $models.ServerInfoDTO.createFrom;
-const $$createType5 = $models.SocketServerDTO.createFrom;
-const $$createType6 = $models.AppDTO.createFrom;
-const $$createType7 = $Create.Array($$createType6);
-const $$createType8 = $Create.Array($$createType0);
-const $$createType9 = $models.ScanResultDTO.createFrom;
-const $$createType10 = $Create.Array($$createType9);
+const $$createType2 = $models.AppInfoDTO.createFrom;
+const $$createType3 = $models.PresetDTO.createFrom;
+const $$createType4 = $Create.Array($$createType3);
+const $$createType5 = $models.ServerInfoDTO.createFrom;
+const $$createType6 = $models.SocketServerDTO.createFrom;
+const $$createType7 = $models.AppDTO.createFrom;
+const $$createType8 = $Create.Array($$createType7);
+const $$createType9 = $Create.Array($$createType0);
+const $$createType10 = $models.ScanResultDTO.createFrom;
+const $$createType11 = $Create.Array($$createType10);

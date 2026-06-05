@@ -10,6 +10,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/appproto"
+	"github.com/hantabaru1014/dgl-desktop-hub/internal/buildinfo"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/coyote/ble"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/device"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/hubcore"
@@ -358,6 +359,15 @@ func (s *HubService) GetServerInfo() ServerInfoDTO {
 		Connect: "http://" + addr,
 		Port:    port,
 		Running: running,
+	}
+}
+
+// GetAppInfo はソフトウェアの概要情報 (名称・リポジトリ URL・コミット SHA) を返す。
+func (s *HubService) GetAppInfo() AppInfoDTO {
+	return AppInfoDTO{
+		Name:      "DG-LAB Desktop Hub",
+		RepoURL:   buildinfo.RepoURL,
+		CommitSHA: buildinfo.CommitSHA,
 	}
 }
 

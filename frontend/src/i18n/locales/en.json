@@ -12,6 +12,18 @@
   "language": {
     "label": "Language"
   },
+  "settings": {
+    "title": "Settings",
+    "tabGeneral": "General",
+    "tabAbout": "About",
+    "tabLicenses": "Licenses",
+    "repository": "Repository",
+    "commit": "Commit",
+    "licenseIntro": "This software includes the following third-party software, each owned by its respective copyright holders.",
+    "licenseGroupProtocol": "Protocol definitions",
+    "licenseGroupGo": "Backend (Go)",
+    "licenseGroupFrontend": "Frontend"
+  },
   "header": {
     "autoApprove": "Auto-approve connections",
     "connectedApps": "Connected apps: {{count}}",

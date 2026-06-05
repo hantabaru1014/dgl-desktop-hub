@@ -62,6 +62,49 @@ export class AppDTO {
 }
 
 /**
+ * AppInfoDTO はソフトウェアの概要情報 (設定モーダルの「概要」タブ用)。
+ */
+export class AppInfoDTO {
+    /**
+     * アプリ名
+     */
+    "name": string;
+
+    /**
+     * ソースリポジトリ URL
+     */
+    "repoUrl": string;
+
+    /**
+     * ビルド元のコミット SHA (開発ビルドでは "dev")
+     */
+    "commitSha": string;
+
+    /** Creates a new AppInfoDTO instance. */
+    constructor($$source: Partial<AppInfoDTO> = {}) {
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("repoUrl" in $$source)) {
+            this["repoUrl"] = "";
+        }
+        if (!("commitSha" in $$source)) {
+            this["commitSha"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AppInfoDTO instance from a string or object.
+     */
+    static createFrom($$source: any = {}): AppInfoDTO {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new AppInfoDTO($$parsedSource as Partial<AppInfoDTO>);
+    }
+}
+
+/**
  * ApprovalRequestDTO は接続許可要求 (UI モーダル用)。
  */
 export class ApprovalRequestDTO {

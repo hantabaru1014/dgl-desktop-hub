@@ -9,6 +9,7 @@ export {
 export {
     AccessModeDTO,
     AppDTO,
+    AppInfoDTO,
     ApprovalRequestDTO,
     DeviceDTO,
     PresetDTO,
