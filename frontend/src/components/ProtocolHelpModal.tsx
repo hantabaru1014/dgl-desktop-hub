@@ -1,4 +1,5 @@
 import { useState } from "react";
+import appProto from "../../../proto/com/github/opendglab/app.proto?raw";
 
 type Props = {
   baseUrl: string; // 例: http://localhost:7330
@@ -79,6 +80,19 @@ export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
   -H "X-DGLab-Token: <token>" \\
   -d '{"version":1,"event":"SETWAVE","device":{"deviceId":"<id>","deviceChannel":"CHANNEL_A"},"wave":{"waveName":"Breathing"}}'`;
 
+  // downloadProto は app.proto をファイルとして保存させる。
+  const downloadProto = () => {
+    const blob = new Blob([appProto], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "app.proto";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -148,6 +162,19 @@ export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
 
           <Section title="5. 波形設定 (SETWAVE)" desc="deviceChannel は CHANNEL_A / CHANNEL_B。waveName はリストの名前。">
             <CodeBlock code={setWave} />
+          </Section>
+
+          <Section title="プロトコル定義 (app.proto)" desc="メッセージ / enum / サービスの完全な定義です。">
+            <div className="mb-2">
+              <button
+                type="button"
+                onClick={downloadProto}
+                className="rounded-lg bg-indigo-700/70 px-3 py-1 text-xs text-indigo-100 hover:bg-indigo-600"
+              >
+                ⭳ app.proto をダウンロード
+              </button>
+            </div>
+            <CodeBlock code={appProto} />
           </Section>
         </div>
       </div>

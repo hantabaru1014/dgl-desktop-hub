@@ -9,6 +9,8 @@ export default defineConfig({
     host: "127.0.0.1",
     port: Number(process.env.WAILS_VITE_PORT) || 9245,
     strictPort: true,
+    // リポジトリルートの app.proto を ?raw で読み込むため、frontend の外を許可する。
+    fs: { allow: [".."] },
   },
   plugins: [react(), tailwindcss(), wails("./bindings")],
 });
