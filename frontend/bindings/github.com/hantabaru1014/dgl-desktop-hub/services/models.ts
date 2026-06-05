@@ -110,7 +110,7 @@ export class DeviceDTO {
     "softLimitB": number;
 
     /**
-     * 現在の目標強度 (clamp 前)
+     * 現在の強度 (ソフトリミット適用済)
      */
     "strengthA": number;
     "strengthB": number;

@@ -127,13 +127,15 @@ function ChannelPanel({
   useEffect(() => setLimit(currentLimit), [currentLimit]);
 
   const applyStrength = (v: number) => {
-    const c = clamp(v);
+    const c = clamp(v, limit); // ソフトリミットを超えて設定不可
     setStrength(c);
     void HubService.SetStrength(deviceId, channelIndex, 0, c); // mode 0 = 絶対
   };
   const applyLimit = (v: number) => {
     const c = clamp(v);
     setLimit(c);
+    // リミットを下げたら現在強度も追従して切り下げる (バックエンドと同挙動)。
+    if (strength > c) setStrength(c);
     onLimit(c);
   };
 
@@ -169,6 +171,7 @@ function ChannelPanel({
           label="強度"
           labelColor="text-slate-300"
           value={strength}
+          max={limit}
           accent={color}
           onChange={applyStrength}
         />
@@ -188,11 +191,12 @@ type SliderRowProps = {
   label: string;
   labelColor: string;
   value: number;
+  max?: number;
   accent: string;
   onChange: (v: number) => void;
 };
 
-function SliderRow({ label, labelColor, value, accent, onChange }: SliderRowProps) {
+function SliderRow({ label, labelColor, value, max = 200, accent, onChange }: SliderRowProps) {
   return (
     <div>
       <div className={`flex items-center justify-between ${labelColor}`}>
@@ -200,7 +204,7 @@ function SliderRow({ label, labelColor, value, accent, onChange }: SliderRowProp
         <input
           type="number"
           min={0}
-          max={200}
+          max={max}
           value={value}
           className="w-16 rounded bg-slate-700 px-1.5 py-0.5 text-right text-slate-100"
           onChange={(e) => onChange(Number(e.target.value))}
@@ -209,7 +213,7 @@ function SliderRow({ label, labelColor, value, accent, onChange }: SliderRowProp
       <input
         type="range"
         min={0}
-        max={200}
+        max={max}
         value={value}
         className="w-full"
         style={{ accentColor: accent }}
@@ -219,9 +223,9 @@ function SliderRow({ label, labelColor, value, accent, onChange }: SliderRowProp
   );
 }
 
-function clamp(v: number): number {
+function clamp(v: number, max = 200): number {
   if (Number.isNaN(v)) return 0;
   if (v < 0) return 0;
-  if (v > 200) return 200;
+  if (v > max) return max;
   return Math.round(v);
 }

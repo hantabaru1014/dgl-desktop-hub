@@ -11,7 +11,7 @@ type Props = {
 // ChannelGraph はチャンネルの強度を時間軸 (左へ流れる) の棒グラフで描画する。
 // 棒の高さ = 実効出力(波形で変調された強度)、薄い線 = チャンネル強度、
 // 破線 = ソフトリミット。
-// 縦軸の最大は「ソフトリミット+10」とし、リミットが低くても見やすくする。
+// 縦軸の最大は「ソフトリミット+1」とし、強度はリミットを超えないため常に収まる。
 export default function ChannelGraph({ deviceId, channel, softLimit, color }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -44,8 +44,8 @@ export default function ChannelGraph({ deviceId, channel, softLimit, color }: Pr
         ctx.stroke();
       }
 
-      // 縦軸最大 = ソフトリミット+10 (下限 10)。
-      const maxVal = Math.max(softLimit + 10, 10);
+      // 縦軸最大 = ソフトリミット+1。
+      const maxVal = softLimit + 1;
 
       const buf = getBuffer(deviceId);
       const points: Point[] = channel === "a" ? buf.a : buf.b;

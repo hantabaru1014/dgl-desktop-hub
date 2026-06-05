@@ -14,7 +14,7 @@ type DeviceDTO struct {
 	Battery    int    `json:"battery"` // 0..100、不明なら -1
 	SoftLimitA int    `json:"softLimitA"`
 	SoftLimitB int    `json:"softLimitB"`
-	StrengthA  int    `json:"strengthA"` // 現在の目標強度 (clamp 前)
+	StrengthA  int    `json:"strengthA"` // 現在の強度 (ソフトリミット適用済)
 	StrengthB  int    `json:"strengthB"`
 	WaveA      string `json:"waveA"` // 現在の波形名 (なければ空)
 	WaveB      string `json:"waveB"`

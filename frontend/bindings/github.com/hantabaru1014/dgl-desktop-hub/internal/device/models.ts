@@ -10,7 +10,7 @@ import { Create as $Create } from "@wailsio/runtime";
  */
 export class ChannelOutput {
     /**
-     * 目標強度 (clamp 前) 0..200 = 白線
+     * 現在強度 (ソフトリミット適用済) 0..limit = 白線
      */
     "strength": number;
 

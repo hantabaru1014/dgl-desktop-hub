@@ -31,14 +31,15 @@ func clampStrength(target, limit uint8) uint8 {
 
 // channelState は 1 チャンネルの可変状態。
 type channelState struct {
-	target   uint8 // ユーザ/アプリが要求する目標強度 (clamp 前, 0..200)
+	target   uint8 // 現在の強度 (ソフトリミット適用済, 0..limit)
 	reported uint8 // デバイスが報告した実強度 (BLE B1 等)
 	wave     waveform.Waveform
 	playhead int
 }
 
-// applyStrength は mode に従って target を更新する。
-func (c *channelState) applyStrength(mode StrengthMode, val uint8) {
+// applyStrength は mode に従って強度を更新し、ソフトリミットで頭打ちにする。
+// limit を超えるターゲットは保持しない (target は常に [0, limit])。
+func (c *channelState) applyStrength(mode StrengthMode, val, limit uint8) {
 	switch mode {
 	case StrengthAbsolute:
 		c.target = capStrength(int(val))
@@ -47,6 +48,13 @@ func (c *channelState) applyStrength(mode StrengthMode, val uint8) {
 	case StrengthRelativeDec:
 		c.target = capStrength(int(c.target) - int(val))
 	}
+	c.target = clampStrength(c.target, limit)
+}
+
+// clampToLimit は現在の強度をソフトリミットまで切り下げる。
+// ソフトリミット変更時に呼び、リミット超過分を破棄する。
+func (c *channelState) clampToLimit(limit uint8) {
+	c.target = clampStrength(c.target, limit)
 }
 
 // nextQuad は現在の再生位置の Quad を返し、再生位置を 1 進める。

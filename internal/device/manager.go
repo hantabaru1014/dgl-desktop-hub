@@ -13,7 +13,7 @@ const TickInterval = 100 * time.Millisecond
 
 // ChannelOutput はグラフ描画用の 1 チャンネル分の出力値。
 type ChannelOutput struct {
-	Strength uint8 `json:"strength"` // 目標強度 (clamp 前) 0..200 = 白線
+	Strength uint8 `json:"strength"` // 現在強度 (ソフトリミット適用済) 0..limit = 白線
 	Amp      uint8 `json:"amp"`      // 波形平均強度 0..100
 	Output   uint8 `json:"output"`   // 実効出力 = clamp済強度*amp/100 = 棒
 }
@@ -153,6 +153,9 @@ func (m *DeviceManager) SetSoftLimit(id DeviceID, lim SoftLimit) error {
 	}
 	md.mu.Lock()
 	md.limit = SoftLimit{A: capStrength(int(lim.A)), B: capStrength(int(lim.B))}
+	// リミットを下げた場合、現在の強度も新リミットまで切り下げる。
+	md.a.clampToLimit(md.limit.A)
+	md.b.clampToLimit(md.limit.B)
 	applied := md.limit
 	md.mu.Unlock()
 	if sla, ok := md.dev.(SoftLimitAware); ok {
@@ -181,9 +184,9 @@ func (m *DeviceManager) SetStrength(id DeviceID, ch Channel, mode StrengthMode, 
 	}
 	md.mu.Lock()
 	if ch == ChannelA {
-		md.a.applyStrength(mode, val)
+		md.a.applyStrength(mode, val, md.limit.A)
 	} else {
-		md.b.applyStrength(mode, val)
+		md.b.applyStrength(mode, val, md.limit.B)
 	}
 	md.mu.Unlock()
 	m.notifyDevices()
@@ -287,7 +290,8 @@ func (m *DeviceManager) tickAll() {
 	samples := make([]GraphSample, 0, len(mds))
 	for _, md := range mds {
 		md.mu.Lock()
-		ta, tb := md.a.target, md.b.target // 目標強度 (clamp 前)
+		ta, tb := md.a.target, md.b.target // 現在強度 (ソフトリミット適用済)
+		// target は設定時点で適用済だが、念のため出力直前にも頭打ちする。
 		sa := clampStrength(ta, md.limit.A)
 		sb := clampStrength(tb, md.limit.B)
 		qa := md.a.nextQuad()
@@ -313,7 +317,7 @@ func (m *DeviceManager) tickAll() {
 }
 
 // channelOutput はグラフ用サンプルを作る。
-// Strength=目標強度(clamp 前, 白線)、Output=実効出力(clamp 済み * 振幅, 棒)。
+// Strength=現在強度(ソフトリミット適用済, 白線)、Output=実効出力(強度 * 振幅, 棒)。
 func channelOutput(target, clamped, amp uint8) ChannelOutput {
 	return ChannelOutput{
 		Strength: target,
