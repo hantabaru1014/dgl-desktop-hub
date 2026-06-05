@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { getBuffer, MAX_POINTS, type Point } from "../graphStore";
+import { getBuffer, MAX_POINTS, subscribe, type Point } from "../graphStore";
 
 type Props = {
   deviceId: string;
@@ -21,7 +21,6 @@ export default function ChannelGraph({ deviceId, channel, softLimit, color }: Pr
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let raf = 0;
     const draw = () => {
       const dpr = window.devicePixelRatio || 1;
       const w = canvas.clientWidth;
@@ -83,11 +82,10 @@ export default function ChannelGraph({ deviceId, channel, softLimit, color }: Pr
       ctx.lineTo(w, limY);
       ctx.stroke();
       ctx.setLineDash([]);
-
-      raf = requestAnimationFrame(draw);
     };
-    raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
+    // 初回描画 + フレーム到着 (100ms 周期) ごとに再描画。
+    draw();
+    return subscribe(draw);
   }, [deviceId, channel, softLimit, color]);
 
   return <canvas ref={canvasRef} className="w-full h-16 rounded bg-slate-900/60" />;

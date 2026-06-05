@@ -152,7 +152,7 @@ func (m *DeviceManager) SetSoftLimit(id DeviceID, lim SoftLimit) error {
 		return err
 	}
 	md.mu.Lock()
-	md.limit = SoftLimit{A: capStrength(int(lim.A)), B: capStrength(int(lim.B))}
+	md.limit = SoftLimit{A: ClampStrength(int(lim.A)), B: ClampStrength(int(lim.B))}
 	// リミットを下げた場合、現在の強度も新リミットまで切り下げる。
 	md.a.clampToLimit(md.limit.A)
 	md.b.clampToLimit(md.limit.B)

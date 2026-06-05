@@ -185,8 +185,8 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 		return cantDoThis(pb.DGError_DEVICENOTLOCKBYYOU, string(id))
 	}
 	s := req.GetStrength()
-	_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, clampByte(s.GetStrengthA()))
-	_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, clampByte(s.GetStrengthB()))
+	_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthA())))
+	_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthB())))
 	// 他アプリへ強度変化を push。
 	h.broadcast(h.handleGetStrength(req))
 	return okResp(pb.DGEvent_SETSTRENGTH)
@@ -285,16 +285,6 @@ func channelsFor(ch pb.DGDeviceChannel) []device.Channel {
 	default:
 		return []device.Channel{device.ChannelA, device.ChannelB}
 	}
-}
-
-func clampByte(v int32) uint8 {
-	if v < 0 {
-		return 0
-	}
-	if v > int32(device.MaxStrength) {
-		return device.MaxStrength
-	}
-	return uint8(v)
 }
 
 func okResp(ev pb.DGEvent) *pb.DGResponse {

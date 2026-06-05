@@ -110,18 +110,8 @@ func (c *SocketCoyote) onFeedback(fb StrengthFeedback) {
 	report := c.report
 	c.mu.Unlock()
 	if report != nil {
-		report(clampU8(fb.A), clampU8(fb.B))
+		report(device.ClampStrength(fb.A), device.ClampStrength(fb.B))
 	}
-}
-
-func clampU8(v int) uint8 {
-	if v < 0 {
-		return 0
-	}
-	if v > 200 {
-		return 200
-	}
-	return uint8(v)
 }
 
 func shortID(s string) string {

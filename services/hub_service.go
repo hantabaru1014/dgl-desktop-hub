@@ -248,18 +248,18 @@ func (s *HubService) deviceDTOByID(id device.DeviceID) DeviceDTO {
 // SetSoftLimit はチャンネル毎の強度ソフトリミットを設定し、永続化する。
 func (s *HubService) SetSoftLimit(id string, a, b int) error {
 	if err := s.hub.Mgr.SetSoftLimit(device.DeviceID(id), device.SoftLimit{
-		A: clampInt(a), B: clampInt(b),
+		A: device.ClampStrength(a), B: device.ClampStrength(b),
 	}); err != nil {
 		return err
 	}
-	s.settings.SetSoftLimit(id, int(clampInt(a)), int(clampInt(b)))
+	s.settings.SetSoftLimit(id, int(device.ClampStrength(a)), int(device.ClampStrength(b)))
 	return nil
 }
 
 // applyStoredLimit は保存済みソフトリミット/排他モードがあればデバイスへ適用する。
 func (s *HubService) applyStoredLimit(id device.DeviceID) {
 	if a, b, ok := s.settings.GetSoftLimit(string(id)); ok {
-		_ = s.hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: clampInt(a), B: clampInt(b)})
+		_ = s.hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: device.ClampStrength(a), B: device.ClampStrength(b)})
 	}
 	if v, ok := s.settings.GetExclusive(string(id)); ok {
 		s.hub.SetExclusive(id, v)
@@ -285,7 +285,7 @@ func (s *HubService) SetStrength(id string, channel, mode, val int) error {
 	if err != nil {
 		return err
 	}
-	return s.hub.Mgr.SetStrength(device.DeviceID(id), ch, m, clampInt(val))
+	return s.hub.Mgr.SetStrength(device.DeviceID(id), ch, m, device.ClampStrength(val))
 }
 
 // SetWaveformPreset はプリセット名で波形を設定する。channel: 0=A,1=B,-1=両方。
@@ -362,16 +362,6 @@ func (s *HubService) GetServerInfo() ServerInfoDTO {
 }
 
 // --- helpers ---
-
-func clampInt(v int) uint8 {
-	if v < 0 {
-		return 0
-	}
-	if v > int(device.MaxStrength) {
-		return device.MaxStrength
-	}
-	return uint8(v)
-}
 
 func toChannel(c int) (device.Channel, error) {
 	switch c {

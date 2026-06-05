@@ -4,7 +4,6 @@ package appproto
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -73,9 +72,3 @@ func (s *Service) Subscribe(ctx context.Context, req *connect.Request[pb.DGReque
 func (s *Service) Handler(opts ...connect.HandlerOption) (string, http.Handler) {
 	return opendglabconnect.NewOpenDGLabServiceHandler(s, opts...)
 }
-
-// ErrServerClosed は http.ErrServerClosed の再エクスポート (呼び出し側の利便)。
-var ErrServerClosed = http.ErrServerClosed
-
-// IsClosed は err がサーバ正常停止かを判定する。
-func IsClosed(err error) bool { return errors.Is(err, http.ErrServerClosed) }

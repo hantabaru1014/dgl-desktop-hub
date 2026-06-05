@@ -272,6 +272,16 @@ func (h *Hub) touchApp(token string) {
 	h.mu.Unlock()
 }
 
+// releaseOwnedBy は token がロックしていたデバイスを全て解放する。
+// 呼び出し側で h.mu を保持していること。
+func (h *Hub) releaseOwnedBy(token string) {
+	for dev, owner := range h.owners {
+		if owner == token {
+			delete(h.owners, dev)
+		}
+	}
+}
+
 // removeApp はアプリを切断扱いで除去する。
 func (h *Hub) removeApp(token string) {
 	if token == "" {
@@ -280,12 +290,7 @@ func (h *Hub) removeApp(token string) {
 	h.mu.Lock()
 	_, ok := h.apps[token]
 	delete(h.apps, token)
-	// このアプリがロックしていたデバイスを解放。
-	for dev, owner := range h.owners {
-		if owner == token {
-			delete(h.owners, dev)
-		}
-	}
+	h.releaseOwnedBy(token)
 	h.mu.Unlock()
 	if ok {
 		h.notifyApps()
@@ -320,11 +325,7 @@ func (h *Hub) sweepIdleApps() {
 	for token, e := range h.apps {
 		if now.Sub(e.lastSeen) > appIdleTTL {
 			delete(h.apps, token)
-			for dev, owner := range h.owners {
-				if owner == token {
-					delete(h.owners, dev)
-				}
-			}
+			h.releaseOwnedBy(token)
 			removed = true
 		}
 	}

@@ -21,11 +21,11 @@ var (
 )
 
 var (
-	adapter     = bluetooth.DefaultAdapter
-	enableOnce  sync.Once
-	enableErr   error
-	scanMu      sync.Mutex
-	lastScan    = map[string]bluetooth.Address{} // addr string -> Address
+	adapter    = bluetooth.DefaultAdapter
+	enableOnce sync.Once
+	enableErr  error
+	scanMu     sync.Mutex
+	lastScan   = map[string]bluetooth.Address{} // addr string -> Address
 )
 
 func enableAdapter() error {
@@ -275,20 +275,18 @@ func (c *BLECoyote) diffStrength(target uint8, last *uint8) (ParseMethod, uint8)
 
 // Output は ticker からの指令を最新 1 件だけ保持 (drop-oldest)。
 func (c *BLECoyote) Output(cmd device.OutputCommand) error {
-	select {
-	case c.cmdCh <- cmd:
-	default:
-		// 既に保留中の指令があれば捨てて最新で置き換える。
-		select {
-		case <-c.cmdCh:
-		default:
-		}
+	for {
 		select {
 		case c.cmdCh <- cmd:
+			return nil
 		default:
+			// 既に保留中の指令があれば捨てて最新で置き換える。
+			select {
+			case <-c.cmdCh:
+			default:
+			}
 		}
 	}
-	return nil
 }
 
 func (c *BLECoyote) OnStrengthReport(fn func(a, b uint8)) {

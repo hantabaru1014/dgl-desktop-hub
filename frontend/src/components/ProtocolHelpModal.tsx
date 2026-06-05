@@ -1,5 +1,5 @@
-import { useState } from "react";
 import appProto from "../../../proto/com/github/opendglab/app.proto?raw";
+import { useCopy } from "../useCopy";
 
 type Props = {
   baseUrl: string; // 例: http://localhost:7330
@@ -8,21 +8,7 @@ type Props = {
 
 // CodeBlock は複数行のコマンド例をコピーボタン付きで表示する。
 function CodeBlock({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = code;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
+  const [copied, copy] = useCopy();
   return (
     <div className="group relative">
       <pre className="overflow-x-auto rounded-lg bg-slate-950/70 p-3 text-[11px] leading-relaxed text-slate-200">
@@ -30,7 +16,7 @@ function CodeBlock({ code }: { code: string }) {
       </pre>
       <button
         type="button"
-        onClick={copy}
+        onClick={() => copy(code)}
         className="absolute right-2 top-2 rounded bg-slate-700/80 px-2 py-0.5 text-[10px] text-slate-100 opacity-0 transition group-hover:opacity-100 hover:bg-slate-600"
       >
         {copied ? "✓ コピー済" : "⧉ コピー"}

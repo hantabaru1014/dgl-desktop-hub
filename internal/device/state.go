@@ -42,11 +42,11 @@ type channelState struct {
 func (c *channelState) applyStrength(mode StrengthMode, val, limit uint8) {
 	switch mode {
 	case StrengthAbsolute:
-		c.target = capStrength(int(val))
+		c.target = ClampStrength(int(val))
 	case StrengthRelativeInc:
-		c.target = capStrength(int(c.target) + int(val))
+		c.target = ClampStrength(int(c.target) + int(val))
 	case StrengthRelativeDec:
-		c.target = capStrength(int(c.target) - int(val))
+		c.target = ClampStrength(int(c.target) - int(val))
 	}
 	c.target = clampStrength(c.target, limit)
 }
@@ -75,7 +75,9 @@ func (c *channelState) setWaveform(w waveform.Waveform) {
 	c.playhead = 0
 }
 
-func capStrength(v int) uint8 {
+// ClampStrength は任意の整数値を [0, MaxStrength] に収めて uint8 にする。
+// 各プロトコル境界で受け取った強度値の正規化に使う。
+func ClampStrength(v int) uint8 {
 	if v < 0 {
 		return 0
 	}

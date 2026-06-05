@@ -31,16 +31,6 @@ func (q Quad) MeanIntensity() uint8 {
 	return uint8(sum / 4)
 }
 
-// FreqBytes は B0 指令へ書き込む波形周波数 4byte を返す。
-func (q Quad) FreqBytes() [4]byte {
-	return [4]byte{q.Freq[0], q.Freq[1], q.Freq[2], q.Freq[3]}
-}
-
-// IntensityBytes は B0 指令へ書き込む波形強度 4byte を返す。
-func (q Quad) IntensityBytes() [4]byte {
-	return [4]byte{q.Intensity[0], q.Intensity[1], q.Intensity[2], q.Intensity[3]}
-}
-
 // Waveform は時系列に並んだ Quad 列。各 Quad は 100ms を表す。
 // 空の場合は無出力とみなす。再生はループする。
 type Waveform struct {

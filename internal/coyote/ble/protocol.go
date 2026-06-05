@@ -34,12 +34,10 @@ func EncodeB0(seq uint8, methodA, methodB ParseMethod, setA, setB uint8, qa, qb 
 	b[1] = (seq&0x0F)<<4 | (uint8(methodA&0b11)<<2 | uint8(methodB&0b11))
 	b[2] = setA
 	b[3] = setB
-	af, ai := qa.FreqBytes(), qa.IntensityBytes()
-	bf, bi := qb.FreqBytes(), qb.IntensityBytes()
-	copy(b[4:8], af[:])
-	copy(b[8:12], ai[:])
-	copy(b[12:16], bf[:])
-	copy(b[16:20], bi[:])
+	copy(b[4:8], qa.Freq[:])
+	copy(b[8:12], qa.Intensity[:])
+	copy(b[12:16], qb.Freq[:])
+	copy(b[16:20], qb.Intensity[:])
 	return b
 }
 
