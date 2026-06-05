@@ -63,7 +63,7 @@ export default function App() {
     <div className="min-h-full">
       <header className="sticky top-0 z-10 border-b border-slate-700 bg-slate-900/95 px-6 py-4 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-bold text-slate-100">DG-Lab Desktop Hub</h1>
+          <h1 className="text-xl font-bold text-slate-100">DG-LAB Desktop Hub</h1>
           <div className="flex items-center gap-4 text-sm">
             <label className="flex items-center gap-1.5">
               <input

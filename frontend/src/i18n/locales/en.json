@@ -43,7 +43,7 @@
   },
   "socket": {
     "title": "Socket Mode (phone connection)",
-    "desc": "Scan the QR code in the DG-Lab app to connect a Coyote.",
+    "desc": "Scan the QR code in the DG-LAB app to connect a Coyote.",
     "stop": "Stop",
     "start": "Start server",
     "qrAddress": "QR address (host)",

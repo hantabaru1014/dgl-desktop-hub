@@ -15,7 +15,7 @@ type Envelope struct {
 	Message  string `json:"message"`
 }
 
-// QRString は DG-Lab アプリがスキャンする QR 文字列を組み立てる。
+// QRString は DG-LAB アプリがスキャンする QR 文字列を組み立てる。
 //
 //	https://www.dungeon-lab.com/app-download.php#DGLAB-SOCKET#ws://<host>:<port>/<clientId>
 func QRString(host string, port int, clientID string) string {

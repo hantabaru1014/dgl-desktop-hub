@@ -43,7 +43,7 @@
   },
   "socket": {
     "title": "Socket 模式（手机连接）",
-    "desc": "在 DG-Lab 应用中扫描二维码以连接 Coyote。",
+    "desc": "在 DG-LAB 应用中扫描二维码以连接 Coyote。",
     "stop": "停止",
     "start": "启动服务器",
     "qrAddress": "二维码地址（主机）",

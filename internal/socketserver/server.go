@@ -1,5 +1,5 @@
-// Package socketserver は DG-Lab socket mode の WebSocket サーバを実装する。
-// LAN 内のスマホ (DG-Lab アプリ) が QR をスキャンして接続し、ハブが
+// Package socketserver は DG-LAB socket mode の WebSocket サーバを実装する。
+// LAN 内のスマホ (DG-LAB アプリ) が QR をスキャンして接続し、ハブが
 // コントローラとして Coyote を操作する。各接続スマホ = 1 つの SocketCoyote。
 package socketserver
 

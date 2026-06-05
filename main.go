@@ -35,7 +35,7 @@ func main() {
 
 	app := application.New(application.Options{
 		Name:        "dgl-desktop-hub",
-		Description: "DG-Lab Coyote v3 を中継・操作するハブ",
+		Description: "DG-LAB Coyote v3 を中継・操作するハブ",
 		Services: []application.Service{
 			application.NewService(hubService),
 		},
@@ -51,7 +51,7 @@ func main() {
 	hub.Start()
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:            "DG-Lab Desktop Hub",
+		Title:            "DG-LAB Desktop Hub",
 		Width:            1100,
 		Height:           760,
 		BackgroundColour: application.NewRGB(17, 24, 39),
