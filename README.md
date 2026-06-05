@@ -6,6 +6,8 @@ It relays N-to-N connections and performs protocol conversion.
 > [!NOTE]
 > This is an unofficial app and is not affiliated with or endorsed by dungeon-lab.
 
+![dgl-desktop-hub screenshot](docs/images/app-ss.png)
+
 ## Overview
 
 ```
