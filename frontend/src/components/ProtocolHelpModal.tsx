@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from "react-i18next";
 import appProto from "../../../proto/com/github/opendglab/app.proto?raw";
 import { useCopy } from "../useCopy";
 
@@ -6,8 +7,13 @@ type Props = {
   onClose: () => void;
 };
 
+// Trans の埋め込みコード片で共有するインライン <code> スタイル。
+const codeTag = <code className="rounded bg-slate-700/60 px-1" />;
+const codeMonoTag = <code className="rounded bg-slate-700/60 px-1 font-mono" />;
+
 // CodeBlock は複数行のコマンド例をコピーボタン付きで表示する。
 function CodeBlock({ code }: { code: string }) {
+  const { t } = useTranslation();
   const [copied, copy] = useCopy();
   return (
     <div className="group relative">
@@ -19,7 +25,7 @@ function CodeBlock({ code }: { code: string }) {
         onClick={() => copy(code)}
         className="absolute right-2 top-2 rounded bg-slate-700/80 px-2 py-0.5 text-[10px] text-slate-100 opacity-0 transition group-hover:opacity-100 hover:bg-slate-600"
       >
-        {copied ? "✓ コピー済" : "⧉ コピー"}
+        {copied ? t("common.copied") : t("common.copy")}
       </button>
     </div>
   );
@@ -38,6 +44,7 @@ function Section({ title, desc, children }: { title: string; desc?: string; chil
 // ProtocolHelpModal はアプリ操作側プロトコル (OpenDGLab / Connect) の概要と
 // curl での接続・操作例を表示する。
 export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
+  const { t } = useTranslation();
   const send = `${baseUrl}/com.github.opendglab.OpenDGLabService/Send`;
 
   const connect = `curl -X POST ${send} \\
@@ -89,75 +96,84 @@ export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-100">アプリ操作プロトコル / curl 例</h2>
+          <h2 className="text-base font-bold text-slate-100">{t("protocol.title")}</h2>
           <button
             className="rounded-lg bg-slate-600 px-3 py-1 text-sm text-white hover:bg-slate-500"
             onClick={onClose}
           >
-            閉じる
+            {t("common.close")}
           </button>
         </div>
 
         <div className="space-y-4">
           <div className="rounded-lg bg-slate-900/50 p-3 text-xs text-slate-300">
             <p>
-              OpenDGLab-OpenProtocol を{" "}
-              <a
-                href="https://connectrpc.com/docs/protocol"
-                className="text-indigo-300 underline"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Connect プロトコル
-              </a>{" "}
-              (JSON/binary、gRPC・gRPC-Web 互換) で提供します。すべて{" "}
-              <code className="rounded bg-slate-700/60 px-1">POST</code> の単発リクエストで、1 リクエスト =
-              1 イベント (<code className="rounded bg-slate-700/60 px-1">DGRequest</code>) です。
+              <Trans
+                i18nKey="protocol.intro"
+                components={[
+                  <a
+                    href="https://connectrpc.com/docs/protocol"
+                    className="text-indigo-300 underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  />,
+                  codeTag,
+                  codeTag,
+                ]}
+              />
             </p>
             <ul className="mt-2 list-disc space-y-0.5 pl-5">
               <li>
-                エンドポイント:{" "}
-                <code className="rounded bg-slate-700/60 px-1 font-mono">{send}</code>
+                <Trans
+                  i18nKey="protocol.endpoint"
+                  values={{ url: send }}
+                  components={[codeMonoTag]}
+                />
               </li>
               <li>
-                ヘッダ: <code className="rounded bg-slate-700/60 px-1">Content-Type: application/json</code>
+                <Trans
+                  i18nKey="protocol.header"
+                  components={[codeTag]}
+                />
               </li>
               <li>
-                認証: CONNECT で得た token を{" "}
-                <code className="rounded bg-slate-700/60 px-1">X-DGLab-Token</code> ヘッダに付与
+                <Trans
+                  i18nKey="protocol.auth"
+                  components={[codeTag]}
+                />
               </li>
-              <li>enum (event / deviceChannel) は名前の文字列で指定 (例: "SETSTRENGTH", "CHANNEL_A")</li>
+              <li>{t("protocol.enumNote")}</li>
             </ul>
           </div>
 
-          <Section title="1. 接続 (CONNECT)" desc="トークンを発行します。以降のリクエストに付与してください。">
+          <Section title={t("protocol.section1Title")} desc={t("protocol.section1Desc")}>
             <CodeBlock code={connect} />
           </Section>
 
-          <Section title="2. デバイス一覧取得 (GETDEVICE)" desc="操作対象の deviceId を取得します。">
+          <Section title={t("protocol.section2Title")} desc={t("protocol.section2Desc")}>
             <CodeBlock code={getDevice} />
           </Section>
 
-          <Section title="3. 強度設定 (SETSTRENGTH)" desc="strengthA/B は絶対値。ハブ側のソフトリミットで頭打ちされます。">
+          <Section title={t("protocol.section3Title")} desc={t("protocol.section3Desc")}>
             <CodeBlock code={setStrength} />
           </Section>
 
-          <Section title="4. 波形リスト取得 (GETWAVELIST)">
+          <Section title={t("protocol.section4Title")}>
             <CodeBlock code={waveList} />
           </Section>
 
-          <Section title="5. 波形設定 (SETWAVE)" desc="deviceChannel は CHANNEL_A / CHANNEL_B。waveName はリストの名前。">
+          <Section title={t("protocol.section5Title")} desc={t("protocol.section5Desc")}>
             <CodeBlock code={setWave} />
           </Section>
 
-          <Section title="プロトコル定義 (app.proto)" desc="メッセージ / enum / サービスの完全な定義です。">
+          <Section title={t("protocol.protoTitle")} desc={t("protocol.protoDesc")}>
             <div className="mb-2">
               <button
                 type="button"
                 onClick={downloadProto}
                 className="rounded-lg bg-indigo-700/70 px-3 py-1 text-xs text-indigo-100 hover:bg-indigo-600"
               >
-                ⭳ app.proto をダウンロード
+                {t("protocol.downloadProto")}
               </button>
             </div>
             <CodeBlock code={appProto} />

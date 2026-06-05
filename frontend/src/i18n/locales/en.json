@@ -1,0 +1,79 @@
+{
+  "common": {
+    "apply": "Apply",
+    "close": "Close",
+    "delete": "Delete",
+    "port": "Port",
+    "copied": "✓ Copied",
+    "copy": "⧉ Copy",
+    "copyShort": "⧉",
+    "clickToCopy": "Click to copy"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "header": {
+    "autoApprove": "Auto-approve connections",
+    "connectedApps": "Connected apps: {{count}}",
+    "connectGrpc": "Connect/gRPC:",
+    "protocolExamples": "Protocol / curl examples"
+  },
+  "devices": {
+    "addDemo": "＋ Add Demo device",
+    "count": "{{count}} devices",
+    "empty": "No devices. Use \"Add Demo device\" to try it out."
+  },
+  "deviceCard": {
+    "occupiedBy": "Occupied by: {{owner}}",
+    "noExclusiveApp": "No exclusive app",
+    "exclusiveMode": "Exclusive mode",
+    "exclusiveTooltip": "When ON, only one app can control the device",
+    "channel": "Channel {{label}}",
+    "noWaveform": "No waveform",
+    "strength": "Strength",
+    "softLimit": "Soft limit"
+  },
+  "ble": {
+    "scan": "Scan BLE devices",
+    "scanning": "Scanning…",
+    "results": "Scan results",
+    "notFound": "No Coyote found.",
+    "connect": "Connect",
+    "connecting": "Connecting…"
+  },
+  "socket": {
+    "title": "Socket Mode (phone connection)",
+    "desc": "Scan the QR code in the DG-Lab app to connect a Coyote.",
+    "stop": "Stop",
+    "start": "Start server",
+    "qrAddress": "QR address (host)",
+    "saveQr": "Save QR as image"
+  },
+  "approval": {
+    "title": "Connection request",
+    "message": "App <0>{{name}}</0> is requesting a connection.",
+    "noName": "(no name)",
+    "deny": "Deny",
+    "approve": "Approve"
+  },
+  "protocol": {
+    "title": "App control protocol / curl examples",
+    "intro": "OpenDGLab-OpenProtocol is served over the <0>Connect protocol</0> (JSON/binary, gRPC / gRPC-Web compatible). Every call is a single <1>POST</1> request, where 1 request = 1 event (<2>DGRequest</2>).",
+    "endpoint": "Endpoint: <0>{{url}}</0>",
+    "header": "Header: <0>Content-Type: application/json</0>",
+    "auth": "Auth: attach the token obtained from CONNECT in the <0>X-DGLab-Token</0> header",
+    "enumNote": "enum (event / deviceChannel) is specified as a name string (e.g. \"SETSTRENGTH\", \"CHANNEL_A\")",
+    "section1Title": "1. Connect (CONNECT)",
+    "section1Desc": "Issues a token. Attach it to subsequent requests.",
+    "section2Title": "2. Get device list (GETDEVICE)",
+    "section2Desc": "Gets the deviceId of the target device.",
+    "section3Title": "3. Set strength (SETSTRENGTH)",
+    "section3Desc": "strengthA/B are absolute values. They are capped by the hub's soft limit.",
+    "section4Title": "4. Get wave list (GETWAVELIST)",
+    "section5Title": "5. Set waveform (SETWAVE)",
+    "section5Desc": "deviceChannel is CHANNEL_A / CHANNEL_B. waveName is a name from the list.",
+    "protoTitle": "Protocol definition (app.proto)",
+    "protoDesc": "The full definition of messages / enums / services.",
+    "downloadProto": "⭳ Download app.proto"
+  }
+}

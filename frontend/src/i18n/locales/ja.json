@@ -1,0 +1,79 @@
+{
+  "common": {
+    "apply": "適用",
+    "close": "閉じる",
+    "delete": "削除",
+    "port": "ポート",
+    "copied": "✓ コピー済",
+    "copy": "⧉ コピー",
+    "copyShort": "⧉",
+    "clickToCopy": "クリックでコピー"
+  },
+  "language": {
+    "label": "言語"
+  },
+  "header": {
+    "autoApprove": "接続を自動許可",
+    "connectedApps": "接続アプリ: {{count}}",
+    "connectGrpc": "Connect/gRPC:",
+    "protocolExamples": "プロトコル / curl 例"
+  },
+  "devices": {
+    "addDemo": "＋ Demo デバイスを追加",
+    "count": "{{count}} デバイス",
+    "empty": "デバイスがありません。「Demo デバイスを追加」で動作を確認できます。"
+  },
+  "deviceCard": {
+    "occupiedBy": "専有中: {{owner}}",
+    "noExclusiveApp": "専有アプリなし",
+    "exclusiveMode": "排他モード",
+    "exclusiveTooltip": "ONにすると1つのアプリのみ操作可能",
+    "channel": "チャンネル {{label}}",
+    "noWaveform": "波形なし",
+    "strength": "強度",
+    "softLimit": "ソフトリミット"
+  },
+  "ble": {
+    "scan": "BLE デバイスをスキャン",
+    "scanning": "スキャン中…",
+    "results": "スキャン結果",
+    "notFound": "Coyote が見つかりませんでした。",
+    "connect": "接続",
+    "connecting": "接続中…"
+  },
+  "socket": {
+    "title": "Socket Mode (スマホ接続)",
+    "desc": "DG-Lab アプリで QR をスキャンして Coyote を接続します。",
+    "stop": "停止",
+    "start": "サーバを起動",
+    "qrAddress": "QR アドレス (ホスト)",
+    "saveQr": "QR を画像で保存"
+  },
+  "approval": {
+    "title": "接続要求",
+    "message": "アプリ <0>{{name}}</0> が接続を要求しています。",
+    "noName": "(名称なし)",
+    "deny": "拒否",
+    "approve": "許可"
+  },
+  "protocol": {
+    "title": "アプリ操作プロトコル / curl 例",
+    "intro": "OpenDGLab-OpenProtocol を <0>Connect プロトコル</0> (JSON/binary、gRPC・gRPC-Web 互換) で提供します。すべて <1>POST</1> の単発リクエストで、1 リクエスト = 1 イベント (<2>DGRequest</2>) です。",
+    "endpoint": "エンドポイント: <0>{{url}}</0>",
+    "header": "ヘッダ: <0>Content-Type: application/json</0>",
+    "auth": "認証: CONNECT で得た token を <0>X-DGLab-Token</0> ヘッダに付与",
+    "enumNote": "enum (event / deviceChannel) は名前の文字列で指定 (例: \"SETSTRENGTH\", \"CHANNEL_A\")",
+    "section1Title": "1. 接続 (CONNECT)",
+    "section1Desc": "トークンを発行します。以降のリクエストに付与してください。",
+    "section2Title": "2. デバイス一覧取得 (GETDEVICE)",
+    "section2Desc": "操作対象の deviceId を取得します。",
+    "section3Title": "3. 強度設定 (SETSTRENGTH)",
+    "section3Desc": "strengthA/B は絶対値。ハブ側のソフトリミットで頭打ちされます。",
+    "section4Title": "4. 波形リスト取得 (GETWAVELIST)",
+    "section5Title": "5. 波形設定 (SETWAVE)",
+    "section5Desc": "deviceChannel は CHANNEL_A / CHANNEL_B。waveName はリストの名前。",
+    "protoTitle": "プロトコル定義 (app.proto)",
+    "protoDesc": "メッセージ / enum / サービスの完全な定義です。",
+    "downloadProto": "⭳ app.proto をダウンロード"
+  }
+}

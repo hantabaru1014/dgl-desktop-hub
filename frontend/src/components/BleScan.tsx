@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HubService } from "../api";
 
 type ScanRow = { address: string; name: string; rssi: number };
 
 // BleScan は BLE スキャン → 接続を行うボタン + 結果リスト。
 export default function BleScan() {
+  const { t } = useTranslation();
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState<ScanRow[]>([]);
   const [open, setOpen] = useState(false);
@@ -45,20 +47,20 @@ export default function BleScan() {
         onClick={scan}
         disabled={scanning}
       >
-        {scanning ? "スキャン中…" : "BLE デバイスをスキャン"}
+        {scanning ? t("ble.scanning") : t("ble.scan")}
       </button>
 
       {open && (
         <div className="absolute z-20 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-semibold">スキャン結果</span>
+            <span className="text-sm font-semibold">{t("ble.results")}</span>
             <button className="text-xs text-slate-400 hover:text-slate-200" onClick={() => setOpen(false)}>
-              閉じる
+              {t("common.close")}
             </button>
           </div>
           {error && <div className="mb-2 text-xs text-rose-400">{error}</div>}
           {results.length === 0 && !scanning ? (
-            <div className="text-xs text-slate-500">Coyote が見つかりませんでした。</div>
+            <div className="text-xs text-slate-500">{t("ble.notFound")}</div>
           ) : (
             <ul className="space-y-1">
               {results.map((r) => (
@@ -74,7 +76,7 @@ export default function BleScan() {
                     onClick={() => connect(r.address, r.name)}
                     disabled={connecting !== null}
                   >
-                    {connecting === r.address ? "接続中…" : "接続"}
+                    {connecting === r.address ? t("ble.connecting") : t("ble.connect")}
                   </button>
                 </li>
               ))}

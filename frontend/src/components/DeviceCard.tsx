@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HubService, type DeviceDTO, type PresetDTO } from "../api";
 import ChannelGraph from "./ChannelGraph";
 
@@ -20,6 +21,7 @@ const kindColor: Record<string, string> = {
 };
 
 export default function DeviceCard({ device, presets }: Props) {
+  const { t } = useTranslation();
   // ソフトリミットは A/B を同時に送る必要があるため、片方の変更時にもう一方は
   // 現在のバックエンド値を使う。
   const setLimit = (channel: "a" | "b", v: number) => {
@@ -44,22 +46,22 @@ export default function DeviceCard({ device, presets }: Props) {
         <div className="flex items-center gap-3">
           {device.exclusive && (
             <span className="rounded bg-amber-900/50 px-2 py-0.5 text-xs text-amber-300">
-              {device.owner ? `専有中: ${device.owner}` : "専有アプリなし"}
+              {device.owner ? t("deviceCard.occupiedBy", { owner: device.owner }) : t("deviceCard.noExclusiveApp")}
             </span>
           )}
-          <label className="flex items-center gap-1 text-xs text-slate-300" title="ONにすると1つのアプリのみ操作可能">
+          <label className="flex items-center gap-1 text-xs text-slate-300" title={t("deviceCard.exclusiveTooltip")}>
             <input
               type="checkbox"
               checked={device.exclusive}
               onChange={(e) => void HubService.SetDeviceExclusive(device.id, e.target.checked)}
             />
-            排他モード
+            {t("deviceCard.exclusiveMode")}
           </label>
           <button
             className="rounded bg-rose-700/80 px-2 py-1 text-xs text-white hover:bg-rose-600"
             onClick={() => void HubService.RemoveDevice(device.id)}
           >
-            削除
+            {t("common.delete")}
           </button>
         </div>
       </div>
@@ -119,6 +121,7 @@ function ChannelPanel({
   presets,
   onLimit,
 }: PanelProps) {
+  const { t } = useTranslation();
   // バックエンドの現在値に追従しつつ、操作中はローカルで即時反映する。
   const [strength, setStrength] = useState(currentStrength);
   const [limit, setLimit] = useState(currentLimit);
@@ -148,14 +151,14 @@ function ChannelPanel({
     <div className="rounded-lg bg-slate-900/40 p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-bold" style={{ color }}>
-          チャンネル {label}
+          {t("deviceCard.channel", { label })}
         </span>
         <select
           className="rounded bg-slate-700 px-2 py-1 text-xs text-slate-100"
           value={currentWave || "__clear__"}
           onChange={(e) => setPreset(e.target.value)}
         >
-          <option value="__clear__">波形なし</option>
+          <option value="__clear__">{t("deviceCard.noWaveform")}</option>
           {presets.map((p) => (
             <option key={p.name} value={p.name}>
               {p.name}
@@ -168,7 +171,7 @@ function ChannelPanel({
 
       <div className="mt-3 space-y-2 text-xs">
         <SliderRow
-          label="強度"
+          label={t("deviceCard.strength")}
           labelColor="text-slate-300"
           value={strength}
           max={limit}
@@ -176,7 +179,7 @@ function ChannelPanel({
           onChange={applyStrength}
         />
         <SliderRow
-          label="ソフトリミット"
+          label={t("deviceCard.softLimit")}
           labelColor="text-rose-300"
           value={limit}
           accent="#f43f5e"

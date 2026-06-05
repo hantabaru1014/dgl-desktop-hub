@@ -1,0 +1,79 @@
+{
+  "common": {
+    "apply": "应用",
+    "close": "关闭",
+    "delete": "删除",
+    "port": "端口",
+    "copied": "✓ 已复制",
+    "copy": "⧉ 复制",
+    "copyShort": "⧉",
+    "clickToCopy": "点击复制"
+  },
+  "language": {
+    "label": "语言"
+  },
+  "header": {
+    "autoApprove": "自动批准连接",
+    "connectedApps": "已连接应用: {{count}}",
+    "connectGrpc": "Connect/gRPC:",
+    "protocolExamples": "协议 / curl 示例"
+  },
+  "devices": {
+    "addDemo": "＋ 添加 Demo 设备",
+    "count": "{{count}} 个设备",
+    "empty": "暂无设备。点击“添加 Demo 设备”即可试用。"
+  },
+  "deviceCard": {
+    "occupiedBy": "占用中: {{owner}}",
+    "noExclusiveApp": "无占用应用",
+    "exclusiveMode": "独占模式",
+    "exclusiveTooltip": "开启后仅允许一个应用操作设备",
+    "channel": "通道 {{label}}",
+    "noWaveform": "无波形",
+    "strength": "强度",
+    "softLimit": "软限制"
+  },
+  "ble": {
+    "scan": "扫描 BLE 设备",
+    "scanning": "扫描中…",
+    "results": "扫描结果",
+    "notFound": "未找到 Coyote。",
+    "connect": "连接",
+    "connecting": "连接中…"
+  },
+  "socket": {
+    "title": "Socket 模式（手机连接）",
+    "desc": "在 DG-Lab 应用中扫描二维码以连接 Coyote。",
+    "stop": "停止",
+    "start": "启动服务器",
+    "qrAddress": "二维码地址（主机）",
+    "saveQr": "保存二维码图片"
+  },
+  "approval": {
+    "title": "连接请求",
+    "message": "应用 <0>{{name}}</0> 正在请求连接。",
+    "noName": "（无名称）",
+    "deny": "拒绝",
+    "approve": "批准"
+  },
+  "protocol": {
+    "title": "应用控制协议 / curl 示例",
+    "intro": "OpenDGLab-OpenProtocol 通过 <0>Connect 协议</0>（JSON/binary，兼容 gRPC・gRPC-Web）提供。所有调用均为单次 <1>POST</1> 请求，1 个请求 = 1 个事件（<2>DGRequest</2>）。",
+    "endpoint": "端点: <0>{{url}}</0>",
+    "header": "请求头: <0>Content-Type: application/json</0>",
+    "auth": "认证: 将 CONNECT 获取的 token 添加到 <0>X-DGLab-Token</0> 请求头",
+    "enumNote": "enum（event / deviceChannel）以名称字符串指定（例: \"SETSTRENGTH\", \"CHANNEL_A\"）",
+    "section1Title": "1. 连接 (CONNECT)",
+    "section1Desc": "签发 token。请在后续请求中携带。",
+    "section2Title": "2. 获取设备列表 (GETDEVICE)",
+    "section2Desc": "获取操作目标的 deviceId。",
+    "section3Title": "3. 设置强度 (SETSTRENGTH)",
+    "section3Desc": "strengthA/B 为绝对值。会被 hub 端的软限制截顶。",
+    "section4Title": "4. 获取波形列表 (GETWAVELIST)",
+    "section5Title": "5. 设置波形 (SETWAVE)",
+    "section5Desc": "deviceChannel 为 CHANNEL_A / CHANNEL_B。waveName 为列表中的名称。",
+    "protoTitle": "协议定义 (app.proto)",
+    "protoDesc": "消息 / enum / 服务的完整定义。",
+    "downloadProto": "⭳ 下载 app.proto"
+  }
+}

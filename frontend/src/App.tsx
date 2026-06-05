@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Events } from "@wailsio/runtime";
 import {
   HubService,
@@ -14,9 +15,11 @@ import SocketServerPanel from "./components/SocketServerPanel";
 import Copyable from "./components/Copyable";
 import ApprovalModal from "./components/ApprovalModal";
 import ProtocolHelpModal from "./components/ProtocolHelpModal";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { pushFrame } from "./graphStore";
 
 export default function App() {
+  const { t } = useTranslation();
   const [devices, setDevices] = useState<DeviceDTO[]>([]);
   const [presets, setPresets] = useState<PresetDTO[]>([]);
   const [access, setAccess] = useState<AccessModeDTO>({ autoApprove: true });
@@ -68,18 +71,19 @@ export default function App() {
                 checked={access.autoApprove}
                 onChange={(e) => toggleAuto(e.target.checked)}
               />
-              接続を自動許可
+              {t("header.autoApprove")}
             </label>
-            <span className="text-slate-400">接続アプリ: {apps.length}</span>
+            <span className="text-slate-400">{t("header.connectedApps", { count: apps.length })}</span>
+            <LanguageSwitcher />
           </div>
         </div>
         {server && (
           <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-400">
             <span className="flex items-center gap-1">
-              Connect/gRPC: <Copyable text={server.connect} />
+              {t("header.connectGrpc")} <Copyable text={server.connect} />
             </span>
             <span className="flex items-center gap-1">
-              ポート:
+              {t("common.port")}:
               <input
                 type="number"
                 min={1}
@@ -97,14 +101,14 @@ export default function App() {
                   })
                 }
               >
-                適用
+                {t("common.apply")}
               </button>
             </span>
             <button
               className="rounded bg-indigo-700/70 px-2 py-0.5 text-indigo-100 hover:bg-indigo-600"
               onClick={() => setShowHelp(true)}
             >
-              プロトコル / curl 例
+              {t("header.protocolExamples")}
             </button>
           </div>
         )}
@@ -116,17 +120,17 @@ export default function App() {
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
             onClick={() => void HubService.AddDemoDevice("")}
           >
-            ＋ Demo デバイスを追加
+            {t("devices.addDemo")}
           </button>
           <BleScan />
-          <span className="text-sm text-slate-400">{devices.length} デバイス</span>
+          <span className="text-sm text-slate-400">{t("devices.count", { count: devices.length })}</span>
         </div>
 
         <SocketServerPanel />
 
         {devices.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-700 p-10 text-center text-slate-500">
-            デバイスがありません。「Demo デバイスを追加」で動作を確認できます。
+            {t("devices.empty")}
           </div>
         ) : (
           <div className="space-y-4">
