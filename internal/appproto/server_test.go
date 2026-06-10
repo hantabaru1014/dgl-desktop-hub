@@ -29,6 +29,7 @@ func setup(t *testing.T) (*hubcore.Hub, *device.DemoDevice, device.DeviceID, ope
 	return hub, d, id, client, srv
 }
 
+// send は X-DGLab-Token なしで単発リクエストを送信する。
 func send(t *testing.T, c opendglabconnect.OpenDGLabServiceClient, req *pb.DGRequest) *pb.DGResponse {
 	t.Helper()
 	resp, err := c.Send(context.Background(), connect.NewRequest(req))
@@ -38,6 +39,7 @@ func send(t *testing.T, c opendglabconnect.OpenDGLabServiceClient, req *pb.DGReq
 	return resp.Msg
 }
 
+// sendTok は X-DGLab-Token ヘッダ付きで単発リクエストを送信する。
 func sendTok(t *testing.T, c opendglabconnect.OpenDGLabServiceClient, req *pb.DGRequest, token string) *pb.DGResponse {
 	t.Helper()
 	r := connect.NewRequest(req)
@@ -51,32 +53,82 @@ func sendTok(t *testing.T, c opendglabconnect.OpenDGLabServiceClient, req *pb.DG
 	return resp.Msg
 }
 
-// TestExclusiveMode は排他モードで先着アプリのみ操作でき、別アプリが弾かれる
-// ことを確認する。
+// connectApp は CONNECT を送ってトークンを取得するヘルパー。
+func connectApp(t *testing.T, c opendglabconnect.OpenDGLabServiceClient, name, uuid string) string {
+	t.Helper()
+	resp := send(t, c, &pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_CONNECT,
+		Connect: &pb.DGRequest_DGConnect{AppName: name, Uuid: uuid},
+	})
+	tok := resp.GetConnect().GetToken()
+	if tok == "" {
+		t.Fatalf("connectApp(%s): got empty token", name)
+	}
+	return tok
+}
+
+// TestExclusiveMode は排他モードの新仕様を確認する:
+// (a) ロック前の SETSTRENGTH は CANTDOTHIS+DEVICENOTLOCK
+// (b) LOCKDEVICE 後は IsLockedByMe=true
+// (c) ロック取得アプリの SETSTRENGTH は成功
+// (d) 別アプリの SETSTRENGTH は CANTDOTHIS+DEVICENOTLOCKBYYOU
+// (e) 最終強度はロック取得アプリが設定した値
 func TestExclusiveMode(t *testing.T) {
 	hub, _, id, c1, srv := setup(t)
 	hub.SetExclusive(id, true)
 	c2 := opendglabconnect.NewOpenDGLabServiceClient(srv.Client(), srv.URL)
 
-	tok1 := send(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_CONNECT, Connect: &pb.DGRequest_DGConnect{AppName: "a1", Uuid: "u1"}}).GetConnect().GetToken()
-	tok2 := send(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_CONNECT, Connect: &pb.DGRequest_DGConnect{AppName: "a2", Uuid: "u2"}}).GetConnect().GetToken()
+	tok1 := connectApp(t, c1, "a1", "u1")
+	tok2 := connectApp(t, c2, "a2", "u2")
 
-	// app1 が先に操作 → owner を claim、成功。
-	r1 := sendTok(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 10}}, tok1)
+	// (a) ロック前の SETSTRENGTH は CANTDOTHIS+DEVICENOTLOCK
+	pre := sendTok(t, c1, &pb.DGRequest{
+		Version:  1,
+		Event:    pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: 5},
+	}, tok1)
+	if pre.GetEvent() != pb.DGEvent_CANTDOTHIS || pre.GetError() != pb.DGError_DEVICENOTLOCK {
+		t.Errorf("(a) want CANTDOTHIS+DEVICENOTLOCK, got event=%v error=%v", pre.GetEvent(), pre.GetError())
+	}
+
+	// (b) app1 が LOCKDEVICE → IsLockedByMe=true
+	lockResp := sendTok(t, c1, &pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_LOCKDEVICE,
+		Device:  &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+	}, tok1)
+	if !lockResp.GetDevice().GetIsLockedByMe() {
+		t.Errorf("(b) after LOCKDEVICE, IsLockedByMe should be true")
+	}
+
+	// (c) app1 の SETSTRENGTH 成功
+	r1 := sendTok(t, c1, &pb.DGRequest{
+		Version:  1,
+		Event:    pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: 10},
+	}, tok1)
 	if r1.GetEvent() == pb.DGEvent_CANTDOTHIS {
-		t.Fatalf("app1 should control, got error %v", r1.GetError())
-	}
-	// app2 は弾かれる。
-	r2 := sendTok(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 99}}, tok2)
-	if r2.GetEvent() != pb.DGEvent_CANTDOTHIS || r2.GetError() != pb.DGError_DEVICENOTLOCKBYYOU {
-		t.Errorf("app2 should be blocked, got %v / %v", r2.GetEvent(), r2.GetError())
+		t.Fatalf("(c) app1 SETSTRENGTH after LOCKDEVICE should succeed, got error %v", r1.GetError())
 	}
 
+	// (d) app2 の SETSTRENGTH は CANTDOTHIS+DEVICENOTLOCKBYYOU
+	r2 := sendTok(t, c2, &pb.DGRequest{
+		Version:  1,
+		Event:    pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: 99},
+	}, tok2)
+	if r2.GetEvent() != pb.DGEvent_CANTDOTHIS || r2.GetError() != pb.DGError_DEVICENOTLOCKBYYOU {
+		t.Errorf("(d) app2 should be blocked, got %v / %v", r2.GetEvent(), r2.GetError())
+	}
+
+	// (e) 最終強度は app1 の値
 	ta, _, _, _, _, _ := hub.Mgr.Snapshot(id)
 	if ta != 10 {
-		t.Errorf("strength = %d, want 10 (only app1)", ta)
+		t.Errorf("(e) strength = %d, want 10 (only app1)", ta)
 	}
 }
 
@@ -112,13 +164,9 @@ func TestApprovalDeny(t *testing.T) {
 func TestConnectAndGetDevice(t *testing.T) {
 	_, _, id, c, _ := setup(t)
 
-	resp := send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_CONNECT,
-		Connect: &pb.DGRequest_DGConnect{AppName: "tester", Uuid: "uuid-1"}})
-	if resp.GetConnect().GetToken() == "" {
-		t.Fatal("CONNECT returned empty token")
-	}
+	tok := connectApp(t, c, "tester", "uuid-1")
 
-	resp = send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETDEVICE})
+	resp := sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETDEVICE}, tok)
 	devs := resp.GetDeviceList().GetDevices()
 	if len(devs) != 1 {
 		t.Fatalf("device count = %d, want 1", len(devs))
@@ -134,9 +182,11 @@ func TestConnectAndGetDevice(t *testing.T) {
 func TestSetStrengthDrivesDevice(t *testing.T) {
 	hub, _, id, c, _ := setup(t)
 
-	send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+	tok := connectApp(t, c, "tester", "uuid-2")
+
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 42, StrengthB: 77}})
+		Strength: &pb.DGRequest_DGStrength{StrengthA: 42, StrengthB: 77}}, tok)
 
 	ta, tb, _, _, _, err := hub.Mgr.Snapshot(id)
 	if err != nil {
@@ -146,8 +196,8 @@ func TestSetStrengthDrivesDevice(t *testing.T) {
 		t.Errorf("target = (%d,%d), want (42,77)", ta, tb)
 	}
 
-	resp := send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}})
+	resp := sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}}, tok)
 	if resp.GetStrength().GetStrengthA() != 42 {
 		t.Errorf("GETSTRENGTH A = %d, want 42", resp.GetStrength().GetStrengthA())
 	}
@@ -159,9 +209,11 @@ func TestSoftLimitEnforcedAtOutput(t *testing.T) {
 	hub, d, id, c, _ := setup(t)
 	_ = hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: 25, B: 25})
 
-	send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+	tok := connectApp(t, c, "tester", "uuid-3")
+
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 200, StrengthB: 200}})
+		Strength: &pb.DGRequest_DGStrength{StrengthA: 200, StrengthB: 200}}, tok)
 
 	hub.Start()
 	defer hub.Stop()
@@ -176,15 +228,17 @@ func TestSoftLimitEnforcedAtOutput(t *testing.T) {
 func TestSetWavePreset(t *testing.T) {
 	hub, _, id, c, _ := setup(t)
 
-	resp := send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETWAVELIST})
+	tok := connectApp(t, c, "tester", "uuid-4")
+
+	resp := sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETWAVELIST}, tok)
 	names := resp.GetWaveList().GetWave()
 	if len(names) != 16 {
 		t.Fatalf("wave list = %d, want 16", len(names))
 	}
 
-	send(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETWAVE,
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETWAVE,
 		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id), DeviceChannel: pb.DGDeviceChannel_CHANNEL_A},
-		Wave:   &pb.DGRequest_DGWave{WaveName: "Breathing"}})
+		Wave:   &pb.DGRequest_DGWave{WaveName: "Breathing"}}, tok)
 
 	a, _, err := hub.Mgr.WaveNames(id)
 	if err != nil {
@@ -199,13 +253,13 @@ func TestMultiAppControl(t *testing.T) {
 	hub, _, id, c1, srv := setup(t)
 	c2 := opendglabconnect.NewOpenDGLabServiceClient(srv.Client(), srv.URL)
 
-	send(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_CONNECT, Connect: &pb.DGRequest_DGConnect{AppName: "app1", Uuid: "u1"}})
-	send(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_CONNECT, Connect: &pb.DGRequest_DGConnect{AppName: "app2", Uuid: "u2"}})
+	tok1 := connectApp(t, c1, "app1", "u1")
+	tok2 := connectApp(t, c2, "app2", "u2")
 
-	send(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 10}})
-	send(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 20}})
+	sendTok(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 10}}, tok1)
+	sendTok(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 20}}, tok2)
 
 	ta, _, _, _, _, _ := hub.Mgr.Snapshot(id)
 	if ta != 20 {
@@ -214,4 +268,124 @@ func TestMultiAppControl(t *testing.T) {
 	if got := len(hub.Apps()); got != 2 {
 		t.Errorf("connected apps = %d, want 2", got)
 	}
+}
+
+// TestUnauthenticatedSend は CONNECT なし (トークンなし) の GETDEVICE が
+// CANTDOTHIS+UNAUTHED になることを確認する。
+func TestUnauthenticatedSend(t *testing.T) {
+	_, _, id, c, _ := setup(t)
+
+	resp := send(t, c, &pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_GETDEVICE,
+		Device:  &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+	})
+	if resp.GetEvent() != pb.DGEvent_CANTDOTHIS || resp.GetError() != pb.DGError_UNAUTHED {
+		t.Errorf("want CANTDOTHIS+UNAUTHED, got event=%v error=%v", resp.GetEvent(), resp.GetError())
+	}
+}
+
+// TestBadVersion は Version: 2 のリクエストが CANTDOTHIS+UNKNOWN になることを確認する。
+func TestBadVersion(t *testing.T) {
+	_, _, _, c, _ := setup(t)
+
+	resp := send(t, c, &pb.DGRequest{
+		Version: 2,
+		Event:   pb.DGEvent_PING,
+	})
+	if resp.GetEvent() != pb.DGEvent_CANTDOTHIS || resp.GetError() != pb.DGError_UNKNOWN {
+		t.Errorf("want CANTDOTHIS+UNKNOWN, got event=%v error=%v", resp.GetEvent(), resp.GetError())
+	}
+}
+
+// TestCustomWaveInvalidFrame は 3 バイト以外のフレームを含む CUSTOMWAVE が
+// CANTDOTHIS+UNKNOWN になることを確認する。
+func TestCustomWaveInvalidFrame(t *testing.T) {
+	_, _, id, c, _ := setup(t)
+
+	tok := connectApp(t, c, "tester", "uuid-cwif")
+
+	resp := sendTok(t, c, &pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_CUSTOMWAVE,
+		Device:  &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		CustomWave: []*pb.DGRequest_DGCustomWave{
+			{Bytes: []byte{0x01, 0x02}}, // 2 バイト: 不正
+		},
+	}, tok)
+	if resp.GetEvent() != pb.DGEvent_CANTDOTHIS || resp.GetError() != pb.DGError_UNKNOWN {
+		t.Errorf("want CANTDOTHIS+UNKNOWN for invalid frame, got event=%v error=%v", resp.GetEvent(), resp.GetError())
+	}
+}
+
+// TestSubscribeUnauthed はトークンなし・CONNECT でないリクエストで Subscribe を
+// 開始すると最初の受信が CANTDOTHIS+UNAUTHED でストリームが終了することを確認する。
+func TestSubscribeUnauthed(t *testing.T) {
+	_, _, _, c, _ := setup(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req := connect.NewRequest(&pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_GETDEVICE,
+	})
+	// トークンなし (ヘッダ設定しない)
+
+	stream, err := c.Subscribe(ctx, req)
+	if err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+	defer stream.Close()
+
+	// 最初のメッセージが CANTDOTHIS+UNAUTHED であること。
+	ok := stream.Receive()
+	if !ok {
+		t.Fatal("Subscribe: expected one message before EOF, got none")
+	}
+	msg := stream.Msg()
+	if msg.GetEvent() != pb.DGEvent_CANTDOTHIS || msg.GetError() != pb.DGError_UNAUTHED {
+		t.Errorf("want CANTDOTHIS+UNAUTHED, got event=%v error=%v", msg.GetEvent(), msg.GetError())
+	}
+
+	// ストリームが終了していること (次の Receive は false)。
+	if stream.Receive() {
+		t.Error("expected stream to end after CANTDOTHIS+UNAUTHED")
+	}
+}
+
+// TestSubscribeConnect は Subscribe の最初のリクエストを CONNECT にすると
+// 最初の受信が CONNECT レスポンスでトークンが空でないことを確認する。
+func TestSubscribeConnect(t *testing.T) {
+	_, _, _, c, _ := setup(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req := connect.NewRequest(&pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_CONNECT,
+		Connect: &pb.DGRequest_DGConnect{AppName: "sub-tester", Uuid: "uuid-sub"},
+	})
+
+	stream, err := c.Subscribe(ctx, req)
+	if err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+	defer stream.Close()
+
+	// 最初のメッセージが CONNECT レスポンスでトークンが空でないこと。
+	if !stream.Receive() {
+		t.Fatal("Subscribe: expected CONNECT response, got EOF")
+	}
+	msg := stream.Msg()
+	if msg.GetEvent() != pb.DGEvent_CONNECT {
+		t.Errorf("want CONNECT event, got %v", msg.GetEvent())
+	}
+	if tok := msg.GetConnect().GetToken(); tok == "" {
+		t.Error("CONNECT response should have non-empty token")
+	}
+
+	// ctx をキャンセルしてストリームを終了。
+	cancel()
 }

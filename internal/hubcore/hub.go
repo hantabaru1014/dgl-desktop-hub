@@ -249,8 +249,8 @@ func (h *Hub) registerApp(a AppInfo) {
 // DisconnectApp はアプリを明示的に切断扱いで除去する (ストリーム終了時など)。
 func (h *Hub) DisconnectApp(token string) { h.removeApp(token) }
 
-// isKnownApp はトークンが登録済みアプリのものかを返す (再接続の承認スキップ用)。
-func (h *Hub) isKnownApp(token string) bool {
+// IsKnownApp はトークンが登録済みアプリのものかを返す (再接続の承認スキップ用)。
+func (h *Hub) IsKnownApp(token string) bool {
 	if token == "" {
 		return false
 	}
@@ -260,8 +260,8 @@ func (h *Hub) isKnownApp(token string) bool {
 	return ok
 }
 
-// touchApp はトークンに対応するアプリの最終通信時刻を更新する。
-func (h *Hub) touchApp(token string) {
+// TouchApp はトークンに対応するアプリの最終通信時刻を更新する。
+func (h *Hub) TouchApp(token string) {
 	if token == "" {
 		return
 	}

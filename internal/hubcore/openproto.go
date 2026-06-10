@@ -14,11 +14,25 @@ import (
 // Connect ハンドラと素の HTTP POST shim の両方から呼ばれる。
 // sessionToken はストリーミングセッションのトークン (無ければ空文字)。
 func (h *Hub) HandleSend(_ context.Context, req *pb.DGRequest, sessionToken string) (*pb.DGResponse, error) {
-	// トークン付きリクエストはアプリの最終通信時刻を更新 (アイドル切断回避)。
-	h.touchApp(sessionToken)
-	switch req.GetEvent() {
-	case pb.DGEvent_CONNECT:
+	// version 検証: 0 は未設定クライアントへの後方互換として許容し、1 のみを正式サポート。
+	if v := req.GetVersion(); v != 0 && v != 1 {
+		return cantDoThis(pb.DGError_UNKNOWN, ""), nil
+	}
+
+	// CONNECT は未認証でも処理する。
+	if req.GetEvent() == pb.DGEvent_CONNECT {
 		return h.handleConnect(req), nil
+	}
+
+	// CONNECT 以外は認証済みトークンが必要。
+	if !h.IsKnownApp(sessionToken) {
+		return cantDoThis(pb.DGError_UNAUTHED, ""), nil
+	}
+
+	// 認証通過: 最終通信時刻を更新 (アイドル切断回避)。
+	h.TouchApp(sessionToken)
+
+	switch req.GetEvent() {
 	case pb.DGEvent_PING:
 		return &pb.DGResponse{Version: 1, Event: pb.DGEvent_PING}, nil
 	case pb.DGEvent_GETDEVICE:
@@ -52,7 +66,7 @@ func (h *Hub) handleConnect(req *pb.DGRequest) *pb.DGResponse {
 
 	// 非 auto-approve で、未承認の新規接続ならユーザーへ許可を尋ねる。
 	// 既存トークンでの再接続は承認済みとみなす。
-	if !h.AutoApprove() && !h.isKnownApp(existing) {
+	if !h.AutoApprove() && !h.IsKnownApp(existing) {
 		if !h.requestApproval(c.GetAppName(), c.GetUuid()) {
 			// 拒否/タイムアウト: 空トークンを返す (OpenDGLab 仕様の拒否)。
 			return &pb.DGResponse{
@@ -136,30 +150,25 @@ func (h *Hub) handleLock(req *pb.DGRequest, sessionToken string, lock bool) *pb.
 	return lockedDeviceResp(id, false, false)
 }
 
-// canControl は SETSTRENGTH/SETWAVE 等の操作可否を判定する。
-// 排他モードで owner 未設定なら先着で claim する。
-func (h *Hub) canControl(id device.DeviceID, sessionToken string) bool {
-	h.mu.Lock()
+// controlError は SETSTRENGTH/SETWAVE 等の操作可否を判定し、エラーコードを返す。
+// ERRORUNSET (=0) なら操作可。自動 claim は行わず、明示的な LOCKDEVICE を要求する。
+func (h *Hub) controlError(id device.DeviceID, sessionToken string) pb.DGError {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	if !h.exclusive[id] {
-		h.mu.Unlock()
-		return true
+		// 非排他モード: 常に操作可。
+		return pb.DGError_ERRORUNSET
 	}
 	owner := h.owners[id]
 	if owner == "" {
-		claimed := false
-		if sessionToken != "" {
-			h.owners[id] = sessionToken
-			claimed = true
-		}
-		h.mu.Unlock()
-		if claimed {
-			h.notifyDevicesChanged() // 専有アプリ表示を更新
-		}
-		return true
+		// 排他モードで未ロック: LOCKDEVICE で明示的に claim する必要がある。
+		return pb.DGError_DEVICENOTLOCK
 	}
-	allowed := owner == sessionToken
-	h.mu.Unlock()
-	return allowed
+	if owner != sessionToken {
+		// 他アプリがロック中。
+		return pb.DGError_DEVICENOTLOCKBYYOU
+	}
+	return pb.DGError_ERRORUNSET
 }
 
 func (h *Hub) handleGetStrength(req *pb.DGRequest) *pb.DGResponse {
@@ -181,8 +190,8 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 	if !h.Mgr.Has(id) {
 		return cantDoThis(pb.DGError_DEVICEOFFLINE, string(id))
 	}
-	if !h.canControl(id, sessionToken) {
-		return cantDoThis(pb.DGError_DEVICENOTLOCKBYYOU, string(id))
+	if e := h.controlError(id, sessionToken); e != pb.DGError_ERRORUNSET {
+		return cantDoThis(e, string(id))
 	}
 	s := req.GetStrength()
 	_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthA())))
@@ -224,8 +233,8 @@ func (h *Hub) handleSetWave(req *pb.DGRequest, sessionToken string) *pb.DGRespon
 	if !h.Mgr.Has(id) {
 		return cantDoThis(pb.DGError_DEVICEOFFLINE, string(id))
 	}
-	if !h.canControl(id, sessionToken) {
-		return cantDoThis(pb.DGError_DEVICENOTLOCKBYYOU, string(id))
+	if e := h.controlError(id, sessionToken); e != pb.DGError_ERRORUNSET {
+		return cantDoThis(e, string(id))
 	}
 	p, ok := waveform.PresetByName(req.GetWave().GetWaveName())
 	if !ok {
@@ -242,14 +251,19 @@ func (h *Hub) handleCustomWave(req *pb.DGRequest, sessionToken string) *pb.DGRes
 	if !h.Mgr.Has(id) {
 		return cantDoThis(pb.DGError_DEVICEOFFLINE, string(id))
 	}
-	if !h.canControl(id, sessionToken) {
-		return cantDoThis(pb.DGError_DEVICENOTLOCKBYYOU, string(id))
+	if e := h.controlError(id, sessionToken); e != pb.DGError_ERRORUNSET {
+		return cantDoThis(e, string(id))
+	}
+	// カスタム波形のフレーム検証: 空またはいずれかのフレームが 3 バイト以外なら拒否。
+	// proto コメントより bytes は "must be 3 bytes"。
+	if len(req.GetCustomWave()) == 0 {
+		return cantDoThis(pb.DGError_UNKNOWN, string(id))
 	}
 	frames := make([][3]byte, 0, len(req.GetCustomWave()))
 	for _, cw := range req.GetCustomWave() {
 		b := cw.GetBytes()
 		if len(b) != 3 {
-			continue
+			return cantDoThis(pb.DGError_UNKNOWN, string(id))
 		}
 		frames = append(frames, [3]byte{b[0], b[1], b[2]})
 	}
@@ -265,8 +279,8 @@ func (h *Hub) handleClearCustom(req *pb.DGRequest, sessionToken string) *pb.DGRe
 	if !h.Mgr.Has(id) {
 		return cantDoThis(pb.DGError_DEVICEOFFLINE, string(id))
 	}
-	if !h.canControl(id, sessionToken) {
-		return cantDoThis(pb.DGError_DEVICENOTLOCKBYYOU, string(id))
+	if e := h.controlError(id, sessionToken); e != pb.DGError_ERRORUNSET {
+		return cantDoThis(e, string(id))
 	}
 	for _, ch := range channelsFor(req.GetDevice().GetDeviceChannel()) {
 		_ = h.Mgr.ClearWaveform(id, ch)

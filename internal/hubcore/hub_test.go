@@ -53,7 +53,7 @@ func TestTouchAppKeepsAlive(t *testing.T) {
 	h.apps["t"].lastSeen = time.Now().Add(-2 * appIdleTTL)
 	h.mu.Unlock()
 
-	h.touchApp("t") // 通信があったので生存更新
+	h.TouchApp("t") // 通信があったので生存更新
 	h.sweepIdleApps()
 
 	if got := len(h.Apps()); got != 1 {
