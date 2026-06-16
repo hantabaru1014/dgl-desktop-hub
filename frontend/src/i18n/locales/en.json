@@ -73,7 +73,7 @@
     "intro": "OpenDGLab-OpenProtocol is served over the <0>Connect protocol</0> (JSON/binary, gRPC / gRPC-Web compatible). Every call is a single <1>POST</1> request, where 1 request = 1 event (<2>DGRequest</2>).",
     "endpoint": "Endpoint: <0>{{url}}</0>",
     "header": "Header: <0>Content-Type: application/json</0>",
-    "auth": "Auth: attach the token obtained from CONNECT in the <0>X-DGLab-Token</0> header",
+    "auth": "Auth: attach the token obtained from CONNECT in the <0>X-DGLab-Token</0> header, or as a <0>?token=</0> query parameter for apps that cannot set headers",
     "enumNote": "enum (event / deviceChannel) is specified as a name string (e.g. \"SETSTRENGTH\", \"CHANNEL_A\")",
     "section1Title": "1. Connect (CONNECT)",
     "section1Desc": "Issues a token. Attach it to every subsequent request via the X-DGLab-Token header. Requests without a valid token return CANTDOTHIS + UNAUTHED.",

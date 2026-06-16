@@ -1,12 +1,16 @@
 package appproto
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/device"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/hubcore"
@@ -267,6 +271,50 @@ func TestMultiAppControl(t *testing.T) {
 	}
 	if got := len(hub.Apps()); got != 2 {
 		t.Errorf("connected apps = %d, want 2", got)
+	}
+}
+
+// TestQueryTokenAuth は ?token= クエリでの認証が X-DGLab-Token ヘッダと
+// 同様に通ることを確認する (HTTP ヘッダを付与できないアプリ向け)。
+// connect クライアントは baseURL にクエリを付けられないため、Connect の
+// JSON unary プロトコルを生 HTTP POST で直接叩く。
+func TestQueryTokenAuth(t *testing.T) {
+	_, _, id, c, srv := setup(t)
+
+	tok := connectApp(t, c, "tester", "uuid-query")
+
+	body, err := protojson.Marshal(&pb.DGRequest{
+		Version: 1,
+		Event:   pb.DGEvent_GETDEVICE,
+		Device:  &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	url := srv.URL + opendglabconnect.OpenDGLabServiceSendProcedure + "?token=" + tok
+	httpResp, err := srv.Client().Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer httpResp.Body.Close()
+	if httpResp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", httpResp.StatusCode)
+	}
+
+	respBody, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resp pb.DGResponse
+	if err := protojson.Unmarshal(respBody, &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.GetEvent() == pb.DGEvent_CANTDOTHIS {
+		t.Fatalf("query-token auth should succeed, got CANTDOTHIS+%v", resp.GetError())
+	}
+	if devs := resp.GetDeviceList().GetDevices(); len(devs) != 1 {
+		t.Fatalf("device count = %d, want 1", len(devs))
 	}
 }
 

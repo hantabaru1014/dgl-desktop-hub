@@ -19,6 +19,11 @@ import (
 // アイドル TTL (90 秒) より十分短く設定する。
 const keepAliveTick = 30 * time.Second
 
+// tokenHeader は認証トークンを載せる HTTP ヘッダ名。
+// HTTP ヘッダを付与できないアプリ向けに ?token= クエリでも補完できる
+// (httpserver.go の tokenQueryMiddleware を参照)。
+const tokenHeader = "X-DGLab-Token"
+
 // Service は OpenDGLabServiceHandler の実装。
 type Service struct {
 	opendglabconnect.UnimplementedOpenDGLabServiceHandler
@@ -41,7 +46,7 @@ func NewService(hub *hubcore.Hub) *Service {
 
 // Send は単発リクエストを処理する (Connect 経由)。
 func (s *Service) Send(ctx context.Context, req *connect.Request[pb.DGRequest]) (*connect.Response[pb.DGResponse], error) {
-	token := req.Header().Get("X-DGLab-Token")
+	token := req.Header().Get(tokenHeader)
 	resp, err := s.hub.HandleSend(ctx, req.Msg, token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -59,7 +64,7 @@ func (s *Service) Send(ctx context.Context, req *connect.Request[pb.DGRequest]) 
 //
 // 認可通過後は購読ループへ入り、30 秒ごとに TouchApp でアイドルカウンタをリセットする。
 func (s *Service) Subscribe(ctx context.Context, req *connect.Request[pb.DGRequest], stream *connect.ServerStream[pb.DGResponse]) error {
-	token := req.Header().Get("X-DGLab-Token")
+	token := req.Header().Get(tokenHeader)
 
 	if req.Msg.GetEvent() == pb.DGEvent_CONNECT {
 		// CONNECT イベント: トークンを発行してレスポンスを返す。

@@ -73,7 +73,7 @@
     "intro": "OpenDGLab-OpenProtocol 通过 <0>Connect 协议</0>（JSON/binary，兼容 gRPC・gRPC-Web）提供。所有调用均为单次 <1>POST</1> 请求，1 个请求 = 1 个事件（<2>DGRequest</2>）。",
     "endpoint": "端点: <0>{{url}}</0>",
     "header": "请求头: <0>Content-Type: application/json</0>",
-    "auth": "认证: 将 CONNECT 获取的 token 添加到 <0>X-DGLab-Token</0> 请求头",
+    "auth": "认证: 将 CONNECT 获取的 token 添加到 <0>X-DGLab-Token</0> 请求头 (无法设置请求头的应用可使用 <0>?token=</0> 查询参数)",
     "enumNote": "enum（event / deviceChannel）以名称字符串指定（例: \"SETSTRENGTH\", \"CHANNEL_A\"）",
     "section1Title": "1. 连接 (CONNECT)",
     "section1Desc": "签发 token。后续所有请求均须通过 X-DGLab-Token 请求头携带该 token，否则返回 CANTDOTHIS + UNAUTHED。",

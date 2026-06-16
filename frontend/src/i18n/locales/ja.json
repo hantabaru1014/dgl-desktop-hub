@@ -73,7 +73,7 @@
     "intro": "OpenDGLab-OpenProtocol を <0>Connect プロトコル</0> (JSON/binary、gRPC・gRPC-Web 互換) で提供します。すべて <1>POST</1> の単発リクエストで、1 リクエスト = 1 イベント (<2>DGRequest</2>) です。",
     "endpoint": "エンドポイント: <0>{{url}}</0>",
     "header": "ヘッダ: <0>Content-Type: application/json</0>",
-    "auth": "認証: CONNECT で得た token を <0>X-DGLab-Token</0> ヘッダに付与",
+    "auth": "認証: CONNECT で得た token を <0>X-DGLab-Token</0> ヘッダに付与 (ヘッダを付与できないアプリは <0>?token=</0> クエリでも可)",
     "enumNote": "enum (event / deviceChannel) は名前の文字列で指定 (例: \"SETSTRENGTH\", \"CHANNEL_A\")",
     "section1Title": "1. 接続 (CONNECT)",
     "section1Desc": "トークンを発行します。以降のすべてのリクエストで X-DGLab-Token ヘッダに付与してください。未付与のリクエストは CANTDOTHIS + UNAUTHED が返ります。",

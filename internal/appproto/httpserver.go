@@ -35,8 +35,22 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	path, h := svc.Handler()
 	mux.Handle(path, h)
-	// h2c で平文 http2 (Connect の server-streaming) を許可。
-	return h2c.NewHandler(mux, &http2.Server{})
+	// ?token= クエリをヘッダへ補完してから h2c で平文 http2 を許可。
+	return h2c.NewHandler(tokenQueryMiddleware(mux), &http2.Server{})
+}
+
+// tokenQueryMiddleware は HTTP ヘッダを付与できないアプリ向けに、
+// X-DGLab-Token ヘッダが未設定で ?token= クエリがある場合に
+// クエリ値をヘッダへ補完する。ヘッダが既にある場合は何もしない。
+func tokenQueryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get(tokenHeader) == "" {
+			if tok := r.URL.Query().Get("token"); tok != "" {
+				r.Header.Set(tokenHeader, tok)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Start は port で待ち受けを開始する (非ブロッキング)。bind 失敗時はエラーを返す。
