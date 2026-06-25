@@ -80,7 +80,7 @@
     "section2Title": "2. 获取设备列表 (GETDEVICE)",
     "section2Desc": "获取操作目标的 deviceId。",
     "section3Title": "3. 设置强度 (SETSTRENGTH)",
-    "section3Desc": "strengthA/B 为绝对值。会被 hub 端的软限制截顶。独占模式下，发送控制指令前须先通过 LOCKDEVICE 显式锁定设备。未锁定返回 CANTDOTHIS + DEVICENOTLOCK，其他应用已锁定返回 CANTDOTHIS + DEVICENOTLOCKBYYOU。",
+    "section3Desc": "strengthA/B 为绝对值。会被 hub 端的软限制截顶。两个字段均为 optional：省略的通道保持当前值 (例如只发送 strengthA 时仅更新 A 通道)。如需将某通道设为 0，请显式指定，例如 \"strengthB\":0。独占模式下，发送控制指令前须先通过 LOCKDEVICE 显式锁定设备。未锁定返回 CANTDOTHIS + DEVICENOTLOCK，其他应用已锁定返回 CANTDOTHIS + DEVICENOTLOCKBYYOU。",
     "section4Title": "4. 获取波形列表 (GETWAVELIST)",
     "section5Title": "5. 设置波形 (SETWAVE)",
     "section5Desc": "deviceChannel 为 CHANNEL_A / CHANNEL_B。waveName 为列表中的名称。",

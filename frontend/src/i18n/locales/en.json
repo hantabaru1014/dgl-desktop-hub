@@ -80,7 +80,7 @@
     "section2Title": "2. Get device list (GETDEVICE)",
     "section2Desc": "Gets the deviceId of the target device.",
     "section3Title": "3. Set strength (SETSTRENGTH)",
-    "section3Desc": "strengthA/B are absolute values. They are capped by the hub's soft limit. In exclusive mode, you must explicitly lock the device with LOCKDEVICE before sending control commands. Without a lock: CANTDOTHIS + DEVICENOTLOCK; locked by another app: CANTDOTHIS + DEVICENOTLOCKBYYOU.",
+    "section3Desc": "strengthA/B are absolute values. They are capped by the hub's soft limit. Both fields are optional: omitted channels keep their current value (e.g. send only strengthA to update just channel A). To set a channel to 0, include it explicitly, e.g. \"strengthB\":0. In exclusive mode, you must explicitly lock the device with LOCKDEVICE before sending control commands. Without a lock: CANTDOTHIS + DEVICENOTLOCK; locked by another app: CANTDOTHIS + DEVICENOTLOCKBYYOU.",
     "section4Title": "4. Get wave list (GETWAVELIST)",
     "section5Title": "5. Set waveform (SETWAVE)",
     "section5Desc": "deviceChannel is CHANNEL_A / CHANNEL_B. waveName is a name from the list.",

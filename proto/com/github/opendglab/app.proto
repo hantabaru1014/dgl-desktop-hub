@@ -51,10 +51,11 @@ message DGRequest {
         string deviceId = 1; // device ID
         DGDeviceChannel deviceChannel = 2; // device channel
     }
-    // Strength setting
+    // Strength setting. Each field is optional: omit a channel to leave its
+    // current value unchanged. Setting both keeps the original behavior.
     message DGStrength {
-        int32 strengthA = 1; // channel A
-        int32 strengthB = 2; // channel B
+        optional int32 strengthA = 1; // channel A
+        optional int32 strengthB = 2; // channel B
     }
     // Wave
     message DGWave {

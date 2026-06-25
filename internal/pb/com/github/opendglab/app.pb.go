@@ -539,11 +539,12 @@ func (x *DGRequest_DGDeviceID) GetDeviceChannel() DGDeviceChannel {
 	return DGDeviceChannel_UNSET
 }
 
-// Strength setting
+// Strength setting. Each field is optional: omit a channel to leave its
+// current value unchanged. Setting both keeps the original behavior.
 type DGRequest_DGStrength struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	StrengthA     int32                  `protobuf:"varint,1,opt,name=strengthA,proto3" json:"strengthA,omitempty"` // channel A
-	StrengthB     int32                  `protobuf:"varint,2,opt,name=strengthB,proto3" json:"strengthB,omitempty"` // channel B
+	StrengthA     *int32                 `protobuf:"varint,1,opt,name=strengthA,proto3,oneof" json:"strengthA,omitempty"` // channel A
+	StrengthB     *int32                 `protobuf:"varint,2,opt,name=strengthB,proto3,oneof" json:"strengthB,omitempty"` // channel B
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -579,15 +580,15 @@ func (*DGRequest_DGStrength) Descriptor() ([]byte, []int) {
 }
 
 func (x *DGRequest_DGStrength) GetStrengthA() int32 {
-	if x != nil {
-		return x.StrengthA
+	if x != nil && x.StrengthA != nil {
+		return *x.StrengthA
 	}
 	return 0
 }
 
 func (x *DGRequest_DGStrength) GetStrengthB() int32 {
-	if x != nil {
-		return x.StrengthB
+	if x != nil && x.StrengthB != nil {
+		return *x.StrengthB
 	}
 	return 0
 }
@@ -1033,7 +1034,7 @@ var File_com_github_opendglab_app_proto protoreflect.FileDescriptor
 
 const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecom/github/opendglab/app.proto\x12\x14com.github.opendglab\"\x93\x06\n" +
+	"\x1ecom/github/opendglab/app.proto\x12\x14com.github.opendglab\"\xb9\x06\n" +
 	"\tDGRequest\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x05R\aversion\x123\n" +
 	"\x05event\x18\x02 \x01(\x0e2\x1d.com.github.opendglab.DGEventR\x05event\x12C\n" +
@@ -1051,11 +1052,15 @@ const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\n" +
 	"DGDeviceID\x12\x1a\n" +
 	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12K\n" +
-	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1aH\n" +
+	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1an\n" +
 	"\n" +
-	"DGStrength\x12\x1c\n" +
-	"\tstrengthA\x18\x01 \x01(\x05R\tstrengthA\x12\x1c\n" +
-	"\tstrengthB\x18\x02 \x01(\x05R\tstrengthB\x1a$\n" +
+	"DGStrength\x12!\n" +
+	"\tstrengthA\x18\x01 \x01(\x05H\x00R\tstrengthA\x88\x01\x01\x12!\n" +
+	"\tstrengthB\x18\x02 \x01(\x05H\x01R\tstrengthB\x88\x01\x01B\f\n" +
+	"\n" +
+	"_strengthAB\f\n" +
+	"\n" +
+	"_strengthB\x1a$\n" +
 	"\x06DGWave\x12\x1a\n" +
 	"\bwaveName\x18\x01 \x01(\tR\bwaveName\x1a$\n" +
 	"\fDGCustomWave\x12\x14\n" +
@@ -1201,6 +1206,7 @@ func file_com_github_opendglab_app_proto_init() {
 	if File_com_github_opendglab_app_proto != nil {
 		return
 	}
+	file_com_github_opendglab_app_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

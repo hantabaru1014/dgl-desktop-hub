@@ -194,10 +194,20 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 		return cantDoThis(e, string(id))
 	}
 	s := req.GetStrength()
-	_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthA())))
-	_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthB())))
-	// 他アプリへ強度変化を push。
-	h.broadcast(h.handleGetStrength(req))
+	// 各チャンネルは optional。未指定のチャンネルは現状値を維持する。
+	changed := false
+	if s.StrengthA != nil {
+		_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthA())))
+		changed = true
+	}
+	if s.StrengthB != nil {
+		_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthB())))
+		changed = true
+	}
+	// 他アプリへ強度変化を push。何も変えていなければ無駄な broadcast を避ける。
+	if changed {
+		h.broadcast(h.handleGetStrength(req))
+	}
 	return okResp(pb.DGEvent_SETSTRENGTH)
 }
 

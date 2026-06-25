@@ -11,6 +11,7 @@ import (
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/device"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/hubcore"
@@ -91,7 +92,7 @@ func TestExclusiveMode(t *testing.T) {
 		Version:  1,
 		Event:    pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 5},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(5)},
 	}, tok1)
 	if pre.GetEvent() != pb.DGEvent_CANTDOTHIS || pre.GetError() != pb.DGError_DEVICENOTLOCK {
 		t.Errorf("(a) want CANTDOTHIS+DEVICENOTLOCK, got event=%v error=%v", pre.GetEvent(), pre.GetError())
@@ -112,7 +113,7 @@ func TestExclusiveMode(t *testing.T) {
 		Version:  1,
 		Event:    pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 10},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(10)},
 	}, tok1)
 	if r1.GetEvent() == pb.DGEvent_CANTDOTHIS {
 		t.Fatalf("(c) app1 SETSTRENGTH after LOCKDEVICE should succeed, got error %v", r1.GetError())
@@ -123,7 +124,7 @@ func TestExclusiveMode(t *testing.T) {
 		Version:  1,
 		Event:    pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 99},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(99)},
 	}, tok2)
 	if r2.GetEvent() != pb.DGEvent_CANTDOTHIS || r2.GetError() != pb.DGError_DEVICENOTLOCKBYYOU {
 		t.Errorf("(d) app2 should be blocked, got %v / %v", r2.GetEvent(), r2.GetError())
@@ -190,7 +191,7 @@ func TestSetStrengthDrivesDevice(t *testing.T) {
 
 	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 42, StrengthB: 77}}, tok)
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(42), StrengthB: proto.Int32(77)}}, tok)
 
 	ta, tb, _, _, _, err := hub.Mgr.Snapshot(id)
 	if err != nil {
@@ -207,6 +208,34 @@ func TestSetStrengthDrivesDevice(t *testing.T) {
 	}
 }
 
+// TestSetStrengthSingleChannel は片方のチャンネルだけ送ったとき
+// もう片方の値が維持されることを確認する (DGStrength の optional 化)。
+func TestSetStrengthSingleChannel(t *testing.T) {
+	hub, _, id, c, _ := setup(t)
+	tok := connectApp(t, c, "tester", "uuid-single")
+
+	// まず A=30, B=40 を設定。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(30), StrengthB: proto.Int32(40)}}, tok)
+
+	// A だけ 55 に更新。B は維持されるべき。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(55)}}, tok)
+	if ta, tb, _, _, _, _ := hub.Mgr.Snapshot(id); ta != 55 || tb != 40 {
+		t.Errorf("after A-only update: (%d,%d), want (55,40)", ta, tb)
+	}
+
+	// B だけ 0 に更新。A は維持されるべき (0 値も明示送信で反映される)。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{StrengthB: proto.Int32(0)}}, tok)
+	if ta, tb, _, _, _, _ := hub.Mgr.Snapshot(id); ta != 55 || tb != 0 {
+		t.Errorf("after B-only zero: (%d,%d), want (55,0)", ta, tb)
+	}
+}
+
 // TestSoftLimitEnforcedAtOutput は出力ループでソフトリミットが効くことを
 // 実 tick (hub.Start) を回して確認する。
 func TestSoftLimitEnforcedAtOutput(t *testing.T) {
@@ -217,7 +246,7 @@ func TestSoftLimitEnforcedAtOutput(t *testing.T) {
 
 	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
 		Device:   &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGRequest_DGStrength{StrengthA: 200, StrengthB: 200}}, tok)
+		Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(200), StrengthB: proto.Int32(200)}}, tok)
 
 	hub.Start()
 	defer hub.Stop()
@@ -261,9 +290,9 @@ func TestMultiAppControl(t *testing.T) {
 	tok2 := connectApp(t, c2, "app2", "u2")
 
 	sendTok(t, c1, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 10}}, tok1)
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(10)}}, tok1)
 	sendTok(t, c2, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
-		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: 20}}, tok2)
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)}, Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(20)}}, tok2)
 
 	ta, _, _, _, _, _ := hub.Mgr.Snapshot(id)
 	if ta != 20 {

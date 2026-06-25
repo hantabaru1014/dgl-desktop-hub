@@ -80,7 +80,7 @@
     "section2Title": "2. デバイス一覧取得 (GETDEVICE)",
     "section2Desc": "操作対象の deviceId を取得します。",
     "section3Title": "3. 強度設定 (SETSTRENGTH)",
-    "section3Desc": "strengthA/B は絶対値。ハブ側のソフトリミットで頭打ちされます。排他モードのデバイスを操作する前に LOCKDEVICE で明示的にロックする必要があります。未ロックなら CANTDOTHIS + DEVICENOTLOCK、他アプリがロック中なら CANTDOTHIS + DEVICENOTLOCKBYYOU が返ります。",
+    "section3Desc": "strengthA/B は絶対値。ハブ側のソフトリミットで頭打ちされます。両フィールドとも optional で、省略したチャンネルは現在値が維持されます (例: strengthA だけ送れば A のみ更新)。0 を送りたい場合は明示的に \"strengthB\":0 のように指定してください。排他モードのデバイスを操作する前に LOCKDEVICE で明示的にロックする必要があります。未ロックなら CANTDOTHIS + DEVICENOTLOCK、他アプリがロック中なら CANTDOTHIS + DEVICENOTLOCKBYYOU が返ります。",
     "section4Title": "4. 波形リスト取得 (GETWAVELIST)",
     "section5Title": "5. 波形設定 (SETWAVE)",
     "section5Desc": "deviceChannel は CHANNEL_A / CHANNEL_B。waveName はリストの名前。",

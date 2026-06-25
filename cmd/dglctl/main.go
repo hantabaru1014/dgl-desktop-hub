@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/hantabaru1014/dgl-desktop-hub/internal/pb/com/github/opendglab"
 	"github.com/hantabaru1014/dgl-desktop-hub/internal/pb/com/github/opendglab/opendglabconnect"
@@ -85,7 +86,7 @@ func main() {
 	for v := int32(0); v <= 120; v += 10 {
 		send(&pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
 			Device:   &pb.DGRequest_DGDeviceID{DeviceId: id},
-			Strength: &pb.DGRequest_DGStrength{StrengthA: v, StrengthB: v}})
+			Strength: &pb.DGRequest_DGStrength{StrengthA: proto.Int32(v), StrengthB: proto.Int32(v)}})
 		gs := send(&pb.DGRequest{Version: 1, Event: pb.DGEvent_GETSTRENGTH,
 			Device: &pb.DGRequest_DGDeviceID{DeviceId: id}})
 		fmt.Printf("  set A=B=%d -> reported target A=%d B=%d\n",

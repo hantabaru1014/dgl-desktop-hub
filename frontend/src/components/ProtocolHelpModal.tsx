@@ -58,10 +58,17 @@ export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
   -d '{"version":1,"event":"GETDEVICE"}'
 # => deviceList にデバイス一覧 (id を以降の deviceId に使う)`;
 
-  const setStrength = `curl -X POST ${send} \\
+  const setStrength = `# 両チャンネルを同時に設定
+curl -X POST ${send} \\
   -H "Content-Type: application/json" \\
   -H "X-DGLab-Token: <token>" \\
-  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthA":20,"strengthB":0}}'`;
+  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthA":20,"strengthB":0}}'
+
+# 片方 (A) だけ更新 — B は現在値を維持
+curl -X POST ${send} \\
+  -H "Content-Type: application/json" \\
+  -H "X-DGLab-Token: <token>" \\
+  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthA":20}}'`;
 
   const waveList = `curl -X POST ${send} \\
   -H "Content-Type: application/json" \\
