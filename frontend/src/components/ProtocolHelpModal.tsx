@@ -46,6 +46,8 @@ function Section({ title, desc, children }: { title: string; desc?: string; chil
 export default function ProtocolHelpModal({ baseUrl, onClose }: Props) {
   const { t } = useTranslation();
   const send = `${baseUrl}/com.github.opendglab.OpenDGLabService/Send`;
+  // WebSocket は同じ TCP ポート (http → ws / https → wss)。
+  const wsSubscribe = `${baseUrl.replace(/^http/, "ws")}/ws/subscribe`;
 
   const connect = `curl -X POST ${send} \\
   -H "Content-Type: application/json" \\
@@ -85,6 +87,14 @@ curl -X POST ${send} \\
   -H "Content-Type: application/json" \\
   -H "X-DGLab-Token: <token>" \\
   -d '{"version":1,"event":"SETWAVE","device":{"deviceId":"<id>","deviceChannel":"CHANNEL_A"},"wave":{"waveName":"Breathing"}}'`;
+
+  const wsSubscribeExample = `# CONNECT で接続してトークンを受信する例
+wscat -c "${wsSubscribe}" \\
+  -x '{"version":1,"event":"CONNECT","connect":{"appName":"my-app","uuid":"my-uuid"}}'
+
+# 既存トークンで購読する例 (ヘッダ非対応クライアントは ?token= クエリで認証)
+wscat -c "${wsSubscribe}?token=<token>" \\
+  -x '{"version":1,"event":"GETDEVICE"}'`;
 
   // downloadProto は app.proto をファイルとして保存させる。
   const downloadProto = () => {
@@ -177,6 +187,10 @@ curl -X POST ${send} \\
 
           <Section title={t("protocol.section5Title")} desc={t("protocol.section5Desc")}>
             <CodeBlock code={setWave} />
+          </Section>
+
+          <Section title={t("protocol.section6Title")} desc={t("protocol.section6Desc")}>
+            <CodeBlock code={wsSubscribeExample} />
           </Section>
 
           <Section title={t("protocol.protoTitle")} desc={t("protocol.protoDesc")}>

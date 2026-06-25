@@ -84,6 +84,8 @@
     "section4Title": "4. Get wave list (GETWAVELIST)",
     "section5Title": "5. Set waveform (SETWAVE)",
     "section5Desc": "deviceChannel is CHANNEL_A / CHANNEL_B. waveName is a name from the list.",
+    "section6Title": "6. Subscribe push (WebSocket)",
+    "section6Desc": "For clients without gRPC / gRPC-Web support, /ws/subscribe on the same port exposes the same Subscribe flow over WebSocket. Send the initial DGRequest (CONNECT or an authenticated request) as a text frame; the server then pushes DGResponse messages as text frames.",
     "protoTitle": "Protocol definition (app.proto)",
     "protoDesc": "The full definition of messages / enums / services.",
     "downloadProto": "⭳ Download app.proto"

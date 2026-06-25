@@ -35,6 +35,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	path, h := svc.Handler()
 	mux.Handle(path, h)
+	// grpc/grpc-web を使えない環境向けの WebSocket 版 Subscribe。
+	mux.HandleFunc("/ws/subscribe", svc.ServeWS)
 	// ?token= クエリをヘッダへ補完してから h2c で平文 http2 を許可。
 	return h2c.NewHandler(tokenQueryMiddleware(mux), &http2.Server{})
 }

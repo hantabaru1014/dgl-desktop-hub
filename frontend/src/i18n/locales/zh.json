@@ -84,6 +84,8 @@
     "section4Title": "4. 获取波形列表 (GETWAVELIST)",
     "section5Title": "5. 设置波形 (SETWAVE)",
     "section5Desc": "deviceChannel 为 CHANNEL_A / CHANNEL_B。waveName 为列表中的名称。",
+    "section6Title": "6. 推送订阅 (Subscribe / WebSocket)",
+    "section6Desc": "适用于无法使用 gRPC / gRPC-Web 的环境，在同一端口的 /ws/subscribe 上以 WebSocket 提供相同的 Subscribe 流程。首个 text frame 发送 DGRequest（CONNECT 或带认证的请求），随后服务器以 text frame 持续推送 DGResponse。",
     "protoTitle": "协议定义 (app.proto)",
     "protoDesc": "消息 / enum / 服务的完整定义。",
     "downloadProto": "⭳ 下载 app.proto"

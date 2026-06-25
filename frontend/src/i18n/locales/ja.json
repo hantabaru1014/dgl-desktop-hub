@@ -84,6 +84,8 @@
     "section4Title": "4. 波形リスト取得 (GETWAVELIST)",
     "section5Title": "5. 波形設定 (SETWAVE)",
     "section5Desc": "deviceChannel は CHANNEL_A / CHANNEL_B。waveName はリストの名前。",
+    "section6Title": "6. 通知購読 (Subscribe / WebSocket)",
+    "section6Desc": "grpc / grpc-Web を使えない環境向けに、同じポートの /ws/subscribe で push を受信できます。最初の text frame に DGRequest (CONNECT または認証済みリクエスト) を送ると、以降サーバから DGResponse が text frame で送られてきます。",
     "protoTitle": "プロトコル定義 (app.proto)",
     "protoDesc": "メッセージ / enum / サービスの完全な定義です。",
     "downloadProto": "⭳ app.proto をダウンロード"
