@@ -68,7 +68,13 @@ curl -X POST ${send} \\
 curl -X POST ${send} \\
   -H "Content-Type: application/json" \\
   -H "X-DGLab-Token: <token>" \\
-  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthA":20}}'`;
+  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthA":20}}'
+
+# ソフトリミットを 100% とした %指定 (A=50%, B=100%)
+curl -X POST ${send} \\
+  -H "Content-Type: application/json" \\
+  -H "X-DGLab-Token: <token>" \\
+  -d '{"version":1,"event":"SETSTRENGTH","device":{"deviceId":"<id>"},"strength":{"strengthAPercent":50,"strengthBPercent":100}}'`;
 
   const waveList = `curl -X POST ${send} \\
   -H "Content-Type: application/json" \\

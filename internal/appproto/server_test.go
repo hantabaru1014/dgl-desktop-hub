@@ -236,6 +236,50 @@ func TestSetStrengthSingleChannel(t *testing.T) {
 	}
 }
 
+// TestSetStrengthPercent は %指定がソフトリミット基準の絶対値に換算されること、
+// 100超は 100% (=リミット) に、100未満は比率に従い適用されることを確認する。
+// percent と absolute が同一チャンネルで両方指定された場合は percent を優先する。
+func TestSetStrengthPercent(t *testing.T) {
+	hub, _, id, c, _ := setup(t)
+	// setup() で limit=(200,200)。テストしやすいよう A=100, B=50 に設定。
+	_ = hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: 100, B: 50})
+	tok := connectApp(t, c, "tester", "uuid-pct")
+
+	// A=50% (→ 50), B=100% (→ 50)
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{
+			StrengthAPercent: proto.Int32(50),
+			StrengthBPercent: proto.Int32(100),
+		}}, tok)
+	if ta, tb, _, _, _, _ := hub.Mgr.Snapshot(id); ta != 50 || tb != 50 {
+		t.Errorf("after percent: (%d,%d), want (50,50)", ta, tb)
+	}
+
+	// 200% (clamp で 100%) は limit までで頭打ち。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{
+			StrengthAPercent: proto.Int32(200),
+		}}, tok)
+	if ta, _, _, _, _, _ := hub.Mgr.Snapshot(id); ta != 100 {
+		t.Errorf("after 200%% on A: %d, want 100 (clamped to limit)", ta)
+	}
+
+	// 同一チャンネルで absolute と percent を両方指定 → percent 優先。
+	// A: absolute=10, percent=80 (→ 80) / B: absolute だけ → そのまま反映。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH,
+		Device: &pb.DGRequest_DGDeviceID{DeviceId: string(id)},
+		Strength: &pb.DGRequest_DGStrength{
+			StrengthA:        proto.Int32(10),
+			StrengthAPercent: proto.Int32(80),
+			StrengthB:        proto.Int32(7),
+		}}, tok)
+	if ta, tb, _, _, _, _ := hub.Mgr.Snapshot(id); ta != 80 || tb != 7 {
+		t.Errorf("after mixed: (%d,%d), want (80,7)", ta, tb)
+	}
+}
+
 // TestSoftLimitEnforcedAtOutput は出力ループでソフトリミットが効くことを
 // 実 tick (hub.Start) を回して確認する。
 func TestSoftLimitEnforcedAtOutput(t *testing.T) {

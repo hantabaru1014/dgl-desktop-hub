@@ -195,12 +195,21 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 	}
 	s := req.GetStrength()
 	// 各チャンネルは optional。未指定のチャンネルは現状値を維持する。
+	// percent 指定はソフトリミットを 100% として実値に換算する。
+	// 同一チャンネルで absolute と percent が両方指定された場合は percent を優先する。
+	limit, _ := h.Mgr.SoftLimitOf(id)
 	changed := false
-	if s.StrengthA != nil {
+	if s.StrengthAPercent != nil {
+		_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, percentToAbsolute(s.GetStrengthAPercent(), limit.A))
+		changed = true
+	} else if s.StrengthA != nil {
 		_ = h.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthA())))
 		changed = true
 	}
-	if s.StrengthB != nil {
+	if s.StrengthBPercent != nil {
+		_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, percentToAbsolute(s.GetStrengthBPercent(), limit.B))
+		changed = true
+	} else if s.StrengthB != nil {
 		_ = h.Mgr.SetStrength(id, device.ChannelB, device.StrengthAbsolute, device.ClampStrength(int(s.GetStrengthB())))
 		changed = true
 	}
@@ -209,6 +218,17 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 		h.broadcast(h.handleGetStrength(req))
 	}
 	return okResp(pb.DGEvent_SETSTRENGTH)
+}
+
+// percent ([0,100] にクランプ) をソフトリミット基準の絶対値に換算する。
+func percentToAbsolute(pct int32, limit uint8) uint8 {
+	if pct < 0 {
+		pct = 0
+	}
+	if pct > 100 {
+		pct = 100
+	}
+	return device.ClampStrength(int(limit) * int(pct) / 100)
 }
 
 func (h *Hub) handleGetWaveList() *pb.DGResponse {

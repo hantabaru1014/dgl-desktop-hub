@@ -53,9 +53,17 @@ message DGRequest {
     }
     // Strength setting. Each field is optional: omit a channel to leave its
     // current value unchanged. Setting both keeps the original behavior.
+    //
+    // Per-channel percent fields (strengthAPercent / strengthBPercent) specify
+    // the strength as a percentage of the channel's soft limit (0 = 0,
+    // 100 = soft limit). Values above 100 are clamped to 100; negative values
+    // are clamped to 0. If both the absolute and percent field of the same
+    // channel are set, the percent field takes precedence.
     message DGStrength {
-        optional int32 strengthA = 1; // channel A
-        optional int32 strengthB = 2; // channel B
+        optional int32 strengthA = 1; // channel A (absolute, 0..200)
+        optional int32 strengthB = 2; // channel B (absolute, 0..200)
+        optional int32 strengthAPercent = 3; // channel A (percent of soft limit, 0..100)
+        optional int32 strengthBPercent = 4; // channel B (percent of soft limit, 0..100)
     }
     // Wave
     message DGWave {

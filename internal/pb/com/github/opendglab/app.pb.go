@@ -541,12 +541,20 @@ func (x *DGRequest_DGDeviceID) GetDeviceChannel() DGDeviceChannel {
 
 // Strength setting. Each field is optional: omit a channel to leave its
 // current value unchanged. Setting both keeps the original behavior.
+//
+// Per-channel percent fields (strengthAPercent / strengthBPercent) specify
+// the strength as a percentage of the channel's soft limit (0 = 0,
+// 100 = soft limit). Values above 100 are clamped to 100; negative values
+// are clamped to 0. If both the absolute and percent field of the same
+// channel are set, the percent field takes precedence.
 type DGRequest_DGStrength struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	StrengthA     *int32                 `protobuf:"varint,1,opt,name=strengthA,proto3,oneof" json:"strengthA,omitempty"` // channel A
-	StrengthB     *int32                 `protobuf:"varint,2,opt,name=strengthB,proto3,oneof" json:"strengthB,omitempty"` // channel B
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	StrengthA        *int32                 `protobuf:"varint,1,opt,name=strengthA,proto3,oneof" json:"strengthA,omitempty"`               // channel A (absolute, 0..200)
+	StrengthB        *int32                 `protobuf:"varint,2,opt,name=strengthB,proto3,oneof" json:"strengthB,omitempty"`               // channel B (absolute, 0..200)
+	StrengthAPercent *int32                 `protobuf:"varint,3,opt,name=strengthAPercent,proto3,oneof" json:"strengthAPercent,omitempty"` // channel A (percent of soft limit, 0..100)
+	StrengthBPercent *int32                 `protobuf:"varint,4,opt,name=strengthBPercent,proto3,oneof" json:"strengthBPercent,omitempty"` // channel B (percent of soft limit, 0..100)
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *DGRequest_DGStrength) Reset() {
@@ -589,6 +597,20 @@ func (x *DGRequest_DGStrength) GetStrengthA() int32 {
 func (x *DGRequest_DGStrength) GetStrengthB() int32 {
 	if x != nil && x.StrengthB != nil {
 		return *x.StrengthB
+	}
+	return 0
+}
+
+func (x *DGRequest_DGStrength) GetStrengthAPercent() int32 {
+	if x != nil && x.StrengthAPercent != nil {
+		return *x.StrengthAPercent
+	}
+	return 0
+}
+
+func (x *DGRequest_DGStrength) GetStrengthBPercent() int32 {
+	if x != nil && x.StrengthBPercent != nil {
+		return *x.StrengthBPercent
 	}
 	return 0
 }
@@ -1034,7 +1056,7 @@ var File_com_github_opendglab_app_proto protoreflect.FileDescriptor
 
 const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\n" +
-	"\x1ecom/github/opendglab/app.proto\x12\x14com.github.opendglab\"\xb9\x06\n" +
+	"\x1ecom/github/opendglab/app.proto\x12\x14com.github.opendglab\"\xc6\a\n" +
 	"\tDGRequest\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x05R\aversion\x123\n" +
 	"\x05event\x18\x02 \x01(\x0e2\x1d.com.github.opendglab.DGEventR\x05event\x12C\n" +
@@ -1052,15 +1074,19 @@ const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\n" +
 	"DGDeviceID\x12\x1a\n" +
 	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12K\n" +
-	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1an\n" +
+	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1a\xfa\x01\n" +
 	"\n" +
 	"DGStrength\x12!\n" +
 	"\tstrengthA\x18\x01 \x01(\x05H\x00R\tstrengthA\x88\x01\x01\x12!\n" +
-	"\tstrengthB\x18\x02 \x01(\x05H\x01R\tstrengthB\x88\x01\x01B\f\n" +
+	"\tstrengthB\x18\x02 \x01(\x05H\x01R\tstrengthB\x88\x01\x01\x12/\n" +
+	"\x10strengthAPercent\x18\x03 \x01(\x05H\x02R\x10strengthAPercent\x88\x01\x01\x12/\n" +
+	"\x10strengthBPercent\x18\x04 \x01(\x05H\x03R\x10strengthBPercent\x88\x01\x01B\f\n" +
 	"\n" +
 	"_strengthAB\f\n" +
 	"\n" +
-	"_strengthB\x1a$\n" +
+	"_strengthBB\x13\n" +
+	"\x11_strengthAPercentB\x13\n" +
+	"\x11_strengthBPercent\x1a$\n" +
 	"\x06DGWave\x12\x1a\n" +
 	"\bwaveName\x18\x01 \x01(\tR\bwaveName\x1a$\n" +
 	"\fDGCustomWave\x12\x14\n" +
