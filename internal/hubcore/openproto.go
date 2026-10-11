@@ -173,15 +173,26 @@ func (h *Hub) controlError(id device.DeviceID, sessionToken string) pb.DGError {
 
 func (h *Hub) handleGetStrength(req *pb.DGRequest) *pb.DGResponse {
 	id := device.DeviceID(req.GetDevice().GetDeviceId())
-	ta, tb, _, _, _, err := h.Mgr.Snapshot(id)
+	ta, tb, _, _, limit, err := h.Mgr.Snapshot(id)
 	if err != nil {
 		return cantDoThis(pb.DGError_DEVICEOFFLINE, string(id))
 	}
+	// percent 指定で操作するクライアントがソフトリミットを知らなくても hub の状態を
+	// 写し取れるよう、% 換算値とソフトリミットも返す (本 hub の拡張フィールド)。
+	pa, pb2 := absoluteToPercent(ta, limit.A), absoluteToPercent(tb, limit.B)
+	la, lb := int32(limit.A), int32(limit.B)
 	return &pb.DGResponse{
 		Version:  1,
 		Event:    pb.DGEvent_GETSTRENGTH,
 		DeviceId: &pb.DGResponse_DGDeviceID{DeviceId: string(id)},
-		Strength: &pb.DGResponse_DGDeviceStrength{StrengthA: int32(ta), StrengthB: int32(tb)},
+		Strength: &pb.DGResponse_DGDeviceStrength{
+			StrengthA:        int32(ta),
+			StrengthB:        int32(tb),
+			StrengthAPercent: &pa,
+			StrengthBPercent: &pb2,
+			SoftLimitA:       &la,
+			SoftLimitB:       &lb,
+		},
 	}
 }
 
@@ -218,6 +229,21 @@ func (h *Hub) handleSetStrength(req *pb.DGRequest, sessionToken string) *pb.DGRe
 		h.broadcast(h.handleGetStrength(req))
 	}
 	return okResp(pb.DGEvent_SETSTRENGTH)
+}
+
+// absoluteToPercent は絶対値をソフトリミット基準の % に換算する (percentToAbsolute の逆)。
+// percentToAbsolute が切り捨てなので、同じ絶対値に戻る最小の % (切り上げ) を返す。
+// これにより「返した % をそのまま strength?Percent で送り返す」操作が必ず no-op になる。
+// limit が 0 のときは 0。
+func absoluteToPercent(abs, limit uint8) int32 {
+	if limit == 0 {
+		return 0
+	}
+	pct := (int(abs)*100 + int(limit) - 1) / int(limit)
+	if pct > 100 {
+		pct = 100
+	}
+	return int32(pct)
 }
 
 // percent ([0,100] にクランプ) をソフトリミット基準の絶対値に換算する。

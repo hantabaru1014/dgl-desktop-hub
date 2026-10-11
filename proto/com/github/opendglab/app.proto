@@ -103,9 +103,23 @@ message DGResponse {
         DGDeviceChannel deviceChannel = 2; // device channel
     }
     // Strength
+    //
+    // Fields 3..6 are extensions of this hub (not part of the original
+    // protocol). They let a client that sets strength by percent
+    // (DGRequest.DGStrength.strength?Percent) mirror the hub's state without
+    // knowing the soft limit in advance. They are `optional` so that 0 is
+    // still serialized in JSON (a client can tell "0" from "old hub").
+    //
+    // strength?Percent is the smallest percent that maps back to the current
+    // absolute strength (ceil(strength * 100 / softLimit), 0 if the limit is
+    // 0), so sending it back with strength?Percent is a no-op.
     message DGDeviceStrength {
-        int32 strengthA = 1; // channel A
-        int32 strengthB = 2; // channel B
+        int32 strengthA = 1; // channel A (absolute, 0..200)
+        int32 strengthB = 2; // channel B (absolute, 0..200)
+        optional int32 strengthAPercent = 3; // channel A (percent of soft limit, 0..100)
+        optional int32 strengthBPercent = 4; // channel B (percent of soft limit, 0..100)
+        optional int32 softLimitA = 5; // channel A soft limit (absolute, 0..200)
+        optional int32 softLimitB = 6; // channel B soft limit (absolute, 0..200)
     }
     // Wave list
     message DGWaveList {

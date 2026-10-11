@@ -510,3 +510,52 @@ func TestSubscribeConnect(t *testing.T) {
 	// ctx をキャンセルしてストリームを終了。
 	cancel()
 }
+
+// GETSTRENGTH は絶対値に加えて、ソフトリミット基準の % とソフトリミット自体を返す。
+// 返した % をそのまま送り返しても絶対値が変わらない (no-op) ことも確認する。
+func TestGetStrengthReportsPercentAndSoftLimit(t *testing.T) {
+	hub, _, id, c, _ := setup(t)
+	_ = hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: 30, B: 150})
+	tok := connectApp(t, c, "tester", "uuid-getpct")
+	dev := &pb.DGRequest_DGDeviceID{DeviceId: string(id)}
+
+	get := func() *pb.DGResponse_DGDeviceStrength {
+		t.Helper()
+		resp := sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_GETSTRENGTH, Device: dev}, tok)
+		s := resp.GetStrength()
+		if s == nil || s.StrengthAPercent == nil || s.StrengthBPercent == nil || s.SoftLimitA == nil || s.SoftLimitB == nil {
+			t.Fatalf("GETSTRENGTH must always carry percent/softLimit (even when 0): %v", resp)
+		}
+		return s
+	}
+
+	// 0 でもフィールドは存在する (optional)。
+	if s := get(); s.GetStrengthAPercent() != 0 || s.GetSoftLimitA() != 30 || s.GetSoftLimitB() != 150 {
+		t.Errorf("initial: %v", s)
+	}
+
+	// A: 51% of 30 → 15 (切り捨て) → 報告は 15 に戻る最小の % = 50。B: 33% of 150 → 49 → 33。
+	sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH, Device: dev,
+		Strength: &pb.DGRequest_DGStrength{StrengthAPercent: proto.Int32(51), StrengthBPercent: proto.Int32(33)}}, tok)
+	s := get()
+	if s.GetStrengthA() != 15 || s.GetStrengthAPercent() != 50 || s.GetStrengthB() != 49 || s.GetStrengthBPercent() != 33 {
+		t.Errorf("after set: %v", s)
+	}
+
+	// 全ての絶対値について、報告された % を送り返しても絶対値が変わらない。
+	for abs := 0; abs <= 30; abs++ {
+		_ = hub.Mgr.SetStrength(id, device.ChannelA, device.StrengthAbsolute, uint8(abs))
+		pct := get().GetStrengthAPercent()
+		sendTok(t, c, &pb.DGRequest{Version: 1, Event: pb.DGEvent_SETSTRENGTH, Device: dev,
+			Strength: &pb.DGRequest_DGStrength{StrengthAPercent: proto.Int32(pct)}}, tok)
+		if got := get().GetStrengthA(); int(got) != abs {
+			t.Errorf("round trip abs=%d via %d%% -> %d", abs, pct, got)
+		}
+	}
+
+	// ソフトリミット 0 のチャンネルは % も 0。
+	_ = hub.Mgr.SetSoftLimit(id, device.SoftLimit{A: 0, B: 150})
+	if s := get(); s.GetStrengthAPercent() != 0 || s.GetSoftLimitA() != 0 {
+		t.Errorf("zero limit: %v", s)
+	}
+}

@@ -910,12 +910,26 @@ func (x *DGResponse_DGDeviceID) GetDeviceChannel() DGDeviceChannel {
 }
 
 // Strength
+//
+// Fields 3..6 are extensions of this hub (not part of the original
+// protocol). They let a client that sets strength by percent
+// (DGRequest.DGStrength.strength?Percent) mirror the hub's state without
+// knowing the soft limit in advance. They are `optional` so that 0 is
+// still serialized in JSON (a client can tell "0" from "old hub").
+//
+// strength?Percent is the smallest percent that maps back to the current
+// absolute strength (ceil(strength * 100 / softLimit), 0 if the limit is
+// 0), so sending it back with strength?Percent is a no-op.
 type DGResponse_DGDeviceStrength struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	StrengthA     int32                  `protobuf:"varint,1,opt,name=strengthA,proto3" json:"strengthA,omitempty"` // channel A
-	StrengthB     int32                  `protobuf:"varint,2,opt,name=strengthB,proto3" json:"strengthB,omitempty"` // channel B
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	StrengthA        int32                  `protobuf:"varint,1,opt,name=strengthA,proto3" json:"strengthA,omitempty"`                     // channel A (absolute, 0..200)
+	StrengthB        int32                  `protobuf:"varint,2,opt,name=strengthB,proto3" json:"strengthB,omitempty"`                     // channel B (absolute, 0..200)
+	StrengthAPercent *int32                 `protobuf:"varint,3,opt,name=strengthAPercent,proto3,oneof" json:"strengthAPercent,omitempty"` // channel A (percent of soft limit, 0..100)
+	StrengthBPercent *int32                 `protobuf:"varint,4,opt,name=strengthBPercent,proto3,oneof" json:"strengthBPercent,omitempty"` // channel B (percent of soft limit, 0..100)
+	SoftLimitA       *int32                 `protobuf:"varint,5,opt,name=softLimitA,proto3,oneof" json:"softLimitA,omitempty"`             // channel A soft limit (absolute, 0..200)
+	SoftLimitB       *int32                 `protobuf:"varint,6,opt,name=softLimitB,proto3,oneof" json:"softLimitB,omitempty"`             // channel B soft limit (absolute, 0..200)
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *DGResponse_DGDeviceStrength) Reset() {
@@ -958,6 +972,34 @@ func (x *DGResponse_DGDeviceStrength) GetStrengthA() int32 {
 func (x *DGResponse_DGDeviceStrength) GetStrengthB() int32 {
 	if x != nil {
 		return x.StrengthB
+	}
+	return 0
+}
+
+func (x *DGResponse_DGDeviceStrength) GetStrengthAPercent() int32 {
+	if x != nil && x.StrengthAPercent != nil {
+		return *x.StrengthAPercent
+	}
+	return 0
+}
+
+func (x *DGResponse_DGDeviceStrength) GetStrengthBPercent() int32 {
+	if x != nil && x.StrengthBPercent != nil {
+		return *x.StrengthBPercent
+	}
+	return 0
+}
+
+func (x *DGResponse_DGDeviceStrength) GetSoftLimitA() int32 {
+	if x != nil && x.SoftLimitA != nil {
+		return *x.SoftLimitA
+	}
+	return 0
+}
+
+func (x *DGResponse_DGDeviceStrength) GetSoftLimitB() int32 {
+	if x != nil && x.SoftLimitB != nil {
+		return *x.SoftLimitB
 	}
 	return 0
 }
@@ -1090,7 +1132,8 @@ const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\x06DGWave\x12\x1a\n" +
 	"\bwaveName\x18\x01 \x01(\tR\bwaveName\x1a$\n" +
 	"\fDGCustomWave\x12\x14\n" +
-	"\x05bytes\x18\x01 \x01(\fR\x05bytes\"\xf9\b\n" +
+	"\x05bytes\x18\x01 \x01(\fR\x05bytes\"\xee\n" +
+	"\n" +
 	"\n" +
 	"DGResponse\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x05R\aversion\x123\n" +
@@ -1117,10 +1160,22 @@ const file_com_github_opendglab_app_proto_rawDesc = "" +
 	"\n" +
 	"DGDeviceID\x12\x1a\n" +
 	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12K\n" +
-	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1aN\n" +
+	"\rdeviceChannel\x18\x02 \x01(\x0e2%.com.github.opendglab.DGDeviceChannelR\rdeviceChannel\x1a\xc2\x02\n" +
 	"\x10DGDeviceStrength\x12\x1c\n" +
 	"\tstrengthA\x18\x01 \x01(\x05R\tstrengthA\x12\x1c\n" +
-	"\tstrengthB\x18\x02 \x01(\x05R\tstrengthB\x1a \n" +
+	"\tstrengthB\x18\x02 \x01(\x05R\tstrengthB\x12/\n" +
+	"\x10strengthAPercent\x18\x03 \x01(\x05H\x00R\x10strengthAPercent\x88\x01\x01\x12/\n" +
+	"\x10strengthBPercent\x18\x04 \x01(\x05H\x01R\x10strengthBPercent\x88\x01\x01\x12#\n" +
+	"\n" +
+	"softLimitA\x18\x05 \x01(\x05H\x02R\n" +
+	"softLimitA\x88\x01\x01\x12#\n" +
+	"\n" +
+	"softLimitB\x18\x06 \x01(\x05H\x03R\n" +
+	"softLimitB\x88\x01\x01B\x13\n" +
+	"\x11_strengthAPercentB\x13\n" +
+	"\x11_strengthBPercentB\r\n" +
+	"\v_softLimitAB\r\n" +
+	"\v_softLimitB\x1a \n" +
 	"\n" +
 	"DGWaveList\x12\x12\n" +
 	"\x04wave\x18\x01 \x03(\tR\x04wave\x1a\x1c\n" +
@@ -1233,6 +1288,7 @@ func file_com_github_opendglab_app_proto_init() {
 		return
 	}
 	file_com_github_opendglab_app_proto_msgTypes[4].OneofWrappers = []any{}
+	file_com_github_opendglab_app_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
